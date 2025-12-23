@@ -1,0 +1,32 @@
+I need you to build a single-page personal finance web app using React, Tailwind CSS, and Recharts. The goal is to replace a manual spreadsheet for tracking net worth and predicting future growth.
+1. Data Storage & Privacy (The "No-Login" Approach)
+Do NOT implement a database or authentication.
+Store all data in the browser's localStorage so it persists on refresh.
+File Management: Create a "Settings" area with two buttons: "Export Data" (downloads a JSON file of my history) and "Import Data" (allows me to upload a JSON file to restore/sync data).
+2. Core Feature: Custom Categories
+Allow me to create/edit/delete custom Asset Categories (e.g., "Main Bank," "Crypto," "ISA," "Credit Card").
+There is no distinction between Asset and Debt types in the setup—I will simply input positive numbers for assets and negative numbers for debt.
+3. Core Feature: Monthly Snapshots (The "Tracker")
+UI: A simple form to input the current balance for each of my custom categories.
+Date Picker: Allow me to select the month/year for this snapshot.
+Logic: Sum the categories to calculate "Total Net Worth" for that month.
+Display: A table view below the charts showing historical data (Month, Breakdown, Total).
+4. Core Feature: Forecasting (The "Predictor")
+Create a sidebar or section called "Cashflow & Bills."
+Allow me to input a list of monthly "Incomings" and "Outgoings/Bills."
+Calculate my "Estimated Monthly Surplus" (Income - Expenses).
+The Prediction Logic: On the Line Chart, draw a solid line for historical data (past snapshots). Then, draw a dotted line projecting 2 years into the future.
+Calculation: Future Month = (Last Known Net Worth) + (Estimated Monthly Surplus * Months passed).
+5. Visualizations (Dashboard)
+Theme: Dark Mode (Sleek, modern, dark grays and neon accents).
+Line Chart: X-axis is Time, Y-axis is Currency. Show Historical Growth (solid) and Future Prediction (dotted).
+Donut Chart: "Current Asset Allocation." Shows the breakdown of my latest snapshot (e.g., how much is Crypto vs. ISA).
+6. General UX
+Keep it extremely simple. No "Sign up" screens. Immediate access to the dashboard.
+Treat negative inputs correctly in the sum math (e.g., Assets + (-Debt) = Net Worth).
+
+How to use this app once generated:
+First Run: Go to the "Categories" section it creates. Add "Current Account," "Bitcoin," "Amex," etc.
+Input Data: Enter your balances for this month.
+Forecasting: Enter your salary and your bills. The chart will immediately draw a dotted line showing where you will likely be in 2 years based on that saving rate.
+Safety: Once a month, click "Export" and save that little file to your Google Drive. That is your backup. 
