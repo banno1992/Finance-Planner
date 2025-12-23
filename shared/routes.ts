@@ -26,10 +26,29 @@ export const api = {
       input: insertCategorySchema,
       responses: { 201: z.custom<typeof categories.$inferSelect>() },
     },
+    reorder: {
+      method: "PATCH" as const,
+      path: "/api/categories/reorder",
+      input: z.array(z.object({ id: z.number(), displayOrder: z.number() })),
+      responses: { 200: z.array(z.custom<typeof categories.$inferSelect>()) },
+    },
     delete: {
       method: "DELETE" as const,
       path: "/api/categories/:id",
       responses: { 204: z.void() },
+    },
+  },
+  settings: {
+    get: {
+      method: "GET" as const,
+      path: "/api/settings",
+      responses: { 200: z.object({ currency: z.string() }) },
+    },
+    update: {
+      method: "PATCH" as const,
+      path: "/api/settings",
+      input: z.object({ currency: z.string() }),
+      responses: { 200: z.object({ currency: z.string() }) },
     },
   },
   snapshots: {
@@ -59,6 +78,12 @@ export const api = {
       path: "/api/cashflows",
       input: insertCashflowSchema,
       responses: { 201: z.custom<typeof cashflows.$inferSelect>() },
+    },
+    update: {
+      method: "PATCH" as const,
+      path: "/api/cashflows/:id",
+      input: insertCashflowSchema.partial(),
+      responses: { 200: z.custom<typeof cashflows.$inferSelect>() },
     },
     delete: {
       method: "DELETE" as const,

@@ -1,4 +1,4 @@
-import { pgTable, text, serial, numeric, timestamp, date } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, numeric, timestamp, date, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -7,6 +7,13 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
+  displayOrder: integer("display_order").default(0),
+});
+
+// Settings (currency, etc.)
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  currency: text("currency").default("USD"),
 });
 
 // Monthly net worth entries
@@ -36,8 +43,10 @@ export const insertCategorySchema = createInsertSchema(categories).omit({ id: tr
 export const insertSnapshotSchema = createInsertSchema(snapshots).omit({ id: true });
 export const insertSnapshotDetailSchema = createInsertSchema(snapshotDetails).omit({ id: true });
 export const insertCashflowSchema = createInsertSchema(cashflows).omit({ id: true });
+export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
 
 export type Category = typeof categories.$inferSelect;
 export type Snapshot = typeof snapshots.$inferSelect;
 export type SnapshotDetail = typeof snapshotDetails.$inferSelect;
 export type Cashflow = typeof cashflows.$inferSelect;
+export type Setting = typeof settings.$inferSelect;
