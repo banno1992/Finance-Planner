@@ -1,18 +1,50 @@
-import { useCashflows, useDeleteCashflow } from "@/hooks/use-finance";
+import { useCashflows, useDeleteCashflow, useUpdateCashflow } from "@/hooks/use-finance";
 import { AddCashflowDialog } from "@/components/AddCashflowDialog";
 import { Button } from "@/components/ui/button";
-import { Trash2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Trash2, ArrowUpRight, ArrowDownRight, Save, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 export default function Cashflow() {
   const { data: cashflows, isLoading } = useCashflows();
   const deleteCashflow = useDeleteCashflow();
+  const updateCashflow = useUpdateCashflow();
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editValues, setEditValues] = useState<{ name: string; amount: string }>({ name: "", amount: "" });
 
   const incomeItems = cashflows?.filter(c => c.type === 'income') || [];
   const expenseItems = cashflows?.filter(c => c.type === 'expense') || [];
 
   const totalIncome = incomeItems.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const totalExpense = expenseItems.reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+  const handleEdit = (id: number, name: string, amount: string) => {
+    setEditingId(id);
+    setEditValues({ name, amount });
+  };
+
+  const handleSave = (id: number) => {
+    if (editValues.name && editValues.amount) {
+      updateCashflow.mutate({ 
+        id, 
+        data: { 
+          name: editValues.name, 
+          amount: editValues.amount 
+        } 
+      }, {
+        onSuccess: () => {
+          setEditingId(null);
+          setEditValues({ name: "", amount: "" });
+        }
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditValues({ name: "", amount: "" });
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -42,19 +74,56 @@ export default function Cashflow() {
 
           <div className="space-y-3">
             {incomeItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
-                <span className="font-medium">{item.name}</span>
-                <div className="flex items-center gap-4">
-                  <span className="font-mono text-green-400">+${Number(item.amount).toLocaleString()}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => deleteCashflow.mutate(item.id)}
-                  >
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+                {editingId === item.id ? (
+                  <>
+                    <Input 
+                      value={editValues.name}
+                      onChange={(e) => setEditValues(prev => ({ ...prev, name: e.target.value }))}
+                      className="flex-1 h-8 text-sm bg-background/50"
+                      placeholder="Name"
+                    />
+                    <div className="relative">
+                      <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">$</span>
+                      <Input 
+                        type="number"
+                        value={editValues.amount}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, amount: e.target.value }))}
+                        className="w-24 h-8 text-sm pl-5 bg-background/50"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-green-400"
+                      onClick={() => handleSave(item.id)}
+                    >
+                      <Save size={14} />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={handleCancel}
+                    >
+                      <X size={14} />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium flex-1 cursor-pointer hover:underline" onClick={() => handleEdit(item.id, item.name, item.amount.toString())}>{item.name}</span>
+                    <span className="font-mono text-green-400">+${Number(item.amount).toLocaleString()}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => deleteCashflow.mutate(item.id)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </>
+                )}
               </div>
             ))}
             
@@ -88,19 +157,56 @@ export default function Cashflow() {
 
           <div className="space-y-3">
             {expenseItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
-                <span className="font-medium">{item.name}</span>
-                <div className="flex items-center gap-4">
-                  <span className="font-mono text-red-400">-${Number(item.amount).toLocaleString()}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => deleteCashflow.mutate(item.id)}
-                  >
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+                {editingId === item.id ? (
+                  <>
+                    <Input 
+                      value={editValues.name}
+                      onChange={(e) => setEditValues(prev => ({ ...prev, name: e.target.value }))}
+                      className="flex-1 h-8 text-sm bg-background/50"
+                      placeholder="Name"
+                    />
+                    <div className="relative">
+                      <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">$</span>
+                      <Input 
+                        type="number"
+                        value={editValues.amount}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, amount: e.target.value }))}
+                        className="w-24 h-8 text-sm pl-5 bg-background/50"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-green-400"
+                      onClick={() => handleSave(item.id)}
+                    >
+                      <Save size={14} />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground"
+                      onClick={handleCancel}
+                    >
+                      <X size={14} />
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <span className="font-medium flex-1 cursor-pointer hover:underline" onClick={() => handleEdit(item.id, item.name, item.amount.toString())}>{item.name}</span>
+                    <span className="font-mono text-red-400">-${Number(item.amount).toLocaleString()}</span>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => deleteCashflow.mutate(item.id)}
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                  </>
+                )}
               </div>
             ))}
 

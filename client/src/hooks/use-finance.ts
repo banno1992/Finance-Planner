@@ -35,6 +35,22 @@ export function useCreateCategory() {
   });
 }
 
+export function useReorderCategories() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (order: Array<{ id: number; displayOrder: number }>) => {
+      const res = await fetch(api.categories.reorder.path, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(order),
+      });
+      if (!res.ok) throw new Error("Failed to reorder categories");
+      return await res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.categories.list.path] }),
+  });
+}
+
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -74,6 +90,23 @@ export function useCreateCashflow() {
       });
       if (!res.ok) throw new Error("Failed to create cashflow");
       return api.cashflows.create.responses[201].parse(await res.json());
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.cashflows.list.path] }),
+  });
+}
+
+export function useUpdateCashflow() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<Omit<Cashflow, "id">> }) => {
+      const url = buildUrl(api.cashflows.update.path, { id });
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update cashflow");
+      return await res.json();
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.cashflows.list.path] }),
   });
@@ -125,8 +158,35 @@ export function useCreateSnapshot() {
 }
 
 // ============================================
-// SETTINGS (Import/Export)
+// SETTINGS (Currency, Import/Export)
 // ============================================
+
+export function useSettings() {
+  return useQuery({
+    queryKey: [api.settings.get.path],
+    queryFn: async () => {
+      const res = await fetch(api.settings.get.path);
+      if (!res.ok) throw new Error("Failed to fetch settings");
+      return await res.json();
+    },
+  });
+}
+
+export function useUpdateSettings() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (currency: string) => {
+      const res = await fetch(api.settings.update.path, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currency }),
+      });
+      if (!res.ok) throw new Error("Failed to update settings");
+      return await res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.settings.get.path] }),
+  });
+}
 
 export function useExportData() {
   return async () => {

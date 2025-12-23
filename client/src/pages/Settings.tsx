@@ -1,18 +1,25 @@
-import { useCategories, useCreateCategory, useDeleteCategory, useExportData } from "@/hooks/use-finance";
+import { useCategories, useCreateCategory, useDeleteCategory, useExportData, useReorderCategories, useSettings, useUpdateSettings } from "@/hooks/use-finance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { Download, Upload, Plus, Trash2, Save } from "lucide-react";
+import { Download, Upload, Plus, Trash2, GripVertical } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+
+const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "INR", "JPY"];
 
 export default function Settings() {
   const { data: categories } = useCategories();
+  const { data: settings } = useSettings();
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
+  const reorderCategories = useReorderCategories();
+  const updateSettings = useUpdateSettings();
   const exportData = useExportData();
 
   const [newCatName, setNewCatName] = useState("");
+  const [draggedId, setDraggedId] = useState<number | null>(null);
 
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +27,28 @@ export default function Settings() {
     createCategory.mutate({ name: newCatName }, {
       onSuccess: () => setNewCatName("")
     });
+  };
+
+  const handleDragStart = (id: number) => {
+    setDraggedId(id);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (targetId: number) => {
+    if (!draggedId || draggedId === targetId || !categories) return;
+    
+    const draggedIndex = categories.findIndex(c => c.id === draggedId);
+    const targetIndex = categories.findIndex(c => c.id === targetId);
+    
+    const newOrder = [...categories];
+    [newOrder[draggedIndex], newOrder[targetIndex]] = [newOrder[targetIndex], newOrder[draggedIndex]];
+    
+    const orderData = newOrder.map((cat, idx) => ({ id: cat.id, displayOrder: idx }));
+    reorderCategories.mutate(orderData);
+    setDraggedId(null);
   };
 
   return (
@@ -31,12 +60,31 @@ export default function Settings() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
         
-        {/* Categories Section */}
+        {/* Categories & Currency Section */}
         <div className="space-y-6">
+          {/* Currency */}
+          <div className="glass-card p-6 rounded-2xl">
+            <h3 className="font-display text-xl font-semibold mb-4">Currency</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Select your preferred currency for display.
+            </p>
+            <Select value={settings?.currency || "USD"} onValueChange={(val) => updateSettings.mutate(val)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CURRENCIES.map(curr => (
+                  <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Categories Section */}
           <div className="glass-card p-6 rounded-2xl">
             <h3 className="font-display text-xl font-semibold mb-4">Asset Categories</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Define the categories for your net worth assets (e.g. Cash, Stocks, Real Estate).
+              Define categories and drag to reorder them.
             </p>
 
             <form onSubmit={handleAddCategory} className="flex gap-2 mb-6">
@@ -53,8 +101,16 @@ export default function Settings() {
 
             <div className="space-y-2">
               {categories?.map((cat) => (
-                <div key={cat.id} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5">
-                  <span>{cat.name}</span>
+                <div 
+                  key={cat.id} 
+                  draggable
+                  onDragStart={() => handleDragStart(cat.id)}
+                  onDragOver={handleDragOver}
+                  onDrop={() => handleDrop(cat.id)}
+                  className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 cursor-move hover:bg-white/10 transition-colors"
+                >
+                  <GripVertical size={16} className="text-muted-foreground flex-shrink-0" />
+                  <span className="flex-1">{cat.name}</span>
                   <Button 
                     variant="ghost" 
                     size="icon" 
