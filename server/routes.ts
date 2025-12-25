@@ -58,6 +58,17 @@ export async function registerRoutes(
     res.status(201).json(snapshot);
   });
 
+  app.patch(api.snapshots.update.path, async (req, res) => {
+    const { balances } = req.body;
+    const snapshot = await storage.updateSnapshot(parseInt(req.params.id), balances);
+    res.json(snapshot);
+  });
+
+  app.delete(api.snapshots.delete.path, async (req, res) => {
+    await storage.deleteSnapshot(parseInt(req.params.id));
+    res.status(204).end();
+  });
+
   app.get(api.cashflows.list.path, async (_req, res) => {
     const flows = await storage.getCashflows();
     res.json(flows);

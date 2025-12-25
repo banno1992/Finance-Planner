@@ -157,6 +157,35 @@ export function useCreateSnapshot() {
   });
 }
 
+export function useUpdateSnapshot() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, balances }: { id: number; balances: Record<string, string> }) => {
+      const url = buildUrl(api.snapshots.update.path, { id });
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ balances }),
+      });
+      if (!res.ok) throw new Error("Failed to update snapshot");
+      return await res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.snapshots.list.path] }),
+  });
+}
+
+export function useDeleteSnapshot() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.snapshots.delete.path, { id });
+      const res = await fetch(url, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete snapshot");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.snapshots.list.path] }),
+  });
+}
+
 // ============================================
 // SETTINGS (Currency, Import/Export)
 // ============================================

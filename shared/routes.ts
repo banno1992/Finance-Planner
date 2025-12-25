@@ -66,6 +66,19 @@ export const api = {
       }),
       responses: { 201: z.any() },
     },
+    update: {
+      method: "PATCH" as const,
+      path: "/api/snapshots/:id",
+      input: z.object({
+        balances: z.record(z.string(), z.string()),
+      }),
+      responses: { 200: z.any() },
+    },
+    delete: {
+      method: "DELETE" as const,
+      path: "/api/snapshots/:id",
+      responses: { 204: z.void() },
+    },
   },
   cashflows: {
     list: {

@@ -16,6 +16,8 @@ export interface IStorage {
   // Snapshots
   getSnapshots(): Promise<any[]>;
   createSnapshot(snapshot: any, balances: Record<string, string>): Promise<any>;
+  updateSnapshot(id: number, balances: Record<string, string>): Promise<any>;
+  deleteSnapshot(id: number): Promise<void>;
 
   // Cashflows
   getCashflows(): Promise<Cashflow[]>;
@@ -71,7 +73,38 @@ export class DatabaseStorage implements IStorage {
         balance: balance
       });
     }
-    return s;
+    const details = await db.select().from(snapshotDetails).where(eq(snapshotDetails.snapshotId, s.id));
+    return { ...s, details };
+  }
+
+  async updateSnapshot(id: number, balances: Record<string, string>): Promise<any> {
+    // Delete old details
+    await db.delete(snapshotDetails).where(eq(snapshotDetails.snapshotId, id));
+    
+    // Calculate new total
+    let total = 0;
+    Object.values(balances).forEach(val => total += parseFloat(val as string));
+    
+    // Update snapshot total
+    await db.update(snapshots).set({ totalNetWorth: total.toString() }).where(eq(snapshots.id, id));
+    
+    // Insert new details
+    for (const [catId, balance] of Object.entries(balances)) {
+      await db.insert(snapshotDetails).values({
+        snapshotId: id,
+        categoryId: parseInt(catId),
+        balance: balance
+      });
+    }
+    
+    const s = await db.select().from(snapshots).where(eq(snapshots.id, id));
+    const details = await db.select().from(snapshotDetails).where(eq(snapshotDetails.snapshotId, id));
+    return { ...s[0], details };
+  }
+
+  async deleteSnapshot(id: number): Promise<void> {
+    await db.delete(snapshotDetails).where(eq(snapshotDetails.snapshotId, id));
+    await db.delete(snapshots).where(eq(snapshots.id, id));
   }
 
   async getCashflows(): Promise<Cashflow[]> {

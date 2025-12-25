@@ -1,7 +1,7 @@
 import { useSnapshots, useCashflows } from "@/hooks/use-finance";
 import { MetricCard } from "@/components/MetricCard";
 import { ChartContainer } from "@/components/ChartContainer";
-import { AddSnapshotDialog } from "@/components/AddSnapshotDialog";
+import { SnapshotManager } from "@/components/SnapshotManager";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   ComposedChart, Line, Bar 
@@ -72,12 +72,9 @@ export default function Dashboard() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-display font-bold text-white">Dashboard</h2>
-          <p className="text-muted-foreground mt-1">Your financial health at a glance</p>
-        </div>
-        <AddSnapshotDialog />
+      <div>
+        <h2 className="text-3xl font-display font-bold text-white">Dashboard</h2>
+        <p className="text-muted-foreground mt-1">Your financial health at a glance</p>
       </div>
 
       {/* Metrics Grid */}
@@ -207,10 +204,8 @@ export default function Dashboard() {
           </div>
         </ChartContainer>
 
-        <ChartContainer title="Asset Allocation (Coming Soon)">
-           <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-             Add detailed asset categories to see visualization
-           </div>
+        <ChartContainer title="Net Worth Snapshots">
+          <SnapshotManager />
         </ChartContainer>
       </div>
     </div>
