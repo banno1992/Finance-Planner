@@ -1,15 +1,18 @@
 import { useState } from "react";
-import { useSnapshots, useCreateSnapshot, useUpdateSnapshot, useDeleteSnapshot, useCategories } from "@/hooks/use-finance";
+import { useSnapshots, useCreateSnapshot, useUpdateSnapshot, useDeleteSnapshot, useCategories, useSettings } from "@/hooks/use-finance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { Trash2, Plus, Save, X, ChevronDown, ChevronUp } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 export function SnapshotManager() {
   const { data: snapshots } = useSnapshots();
   const { data: categories } = useCategories();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "USD";
   const createSnapshot = useCreateSnapshot();
   const updateSnapshot = useUpdateSnapshot();
   const deleteSnapshot = useDeleteSnapshot();
@@ -78,7 +81,7 @@ export function SnapshotManager() {
                 <div key={cat.id} className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground flex-1">{cat.name}</span>
                   <div className="relative">
-                    <span className="absolute left-2 top-1 text-muted-foreground text-xs">$</span>
+                    <span className="absolute left-2 top-1 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
                     <Input
                       type="number"
                       value={newBalances[cat.id] || ""}
@@ -129,7 +132,7 @@ export function SnapshotManager() {
                   <div className="flex items-center gap-4 flex-1">
                     <div>
                       <p className="font-semibold">{format(parseISO(snapshot.month), 'MMMM yyyy')}</p>
-                      <p className="text-sm text-muted-foreground">${Number(snapshot.totalNetWorth).toLocaleString()}</p>
+                      <p className="text-sm text-muted-foreground">{formatCurrency(Number(snapshot.totalNetWorth), currency)}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -154,7 +157,7 @@ export function SnapshotManager() {
                                 <div key={cat.id} className="flex items-center gap-3">
                                   <span className="text-sm text-muted-foreground flex-1">{cat.name}</span>
                                   <div className="relative">
-                                    <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">$</span>
+                                    <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
                                     <Input
                                       type="number"
                                       value={editValues[cat.id] || ""}
@@ -196,7 +199,7 @@ export function SnapshotManager() {
                             return (
                               <div key={cat.id} className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">{cat.name}</span>
-                                <span className="font-mono">${balance.toLocaleString()}</span>
+                                <span className="font-mono">{formatCurrency(balance, currency)}</span>
                               </div>
                             );
                           })}

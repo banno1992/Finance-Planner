@@ -1,13 +1,16 @@
-import { useCashflows, useDeleteCashflow, useUpdateCashflow } from "@/hooks/use-finance";
+import { useCashflows, useDeleteCashflow, useUpdateCashflow, useSettings } from "@/hooks/use-finance";
 import { AddCashflowDialog } from "@/components/AddCashflowDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { Trash2, ArrowUpRight, ArrowDownRight, Save, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 
 export default function Cashflow() {
   const { data: cashflows, isLoading } = useCashflows();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "USD";
   const deleteCashflow = useDeleteCashflow();
   const updateCashflow = useUpdateCashflow();
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -67,7 +70,7 @@ export default function Cashflow() {
               </div>
             </div>
             <div className="text-right">
-              <span className="block text-2xl font-bold text-green-400">${totalIncome.toLocaleString()}</span>
+              <span className="block text-2xl font-bold text-green-400">{formatCurrency(totalIncome, currency)}</span>
               <span className="text-xs text-muted-foreground">/ month</span>
             </div>
           </div>
@@ -84,7 +87,7 @@ export default function Cashflow() {
                       placeholder="Name"
                     />
                     <div className="relative">
-                      <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">$</span>
+                      <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
                       <Input 
                         type="number"
                         value={editValues.amount}
@@ -113,7 +116,7 @@ export default function Cashflow() {
                 ) : (
                   <>
                     <span className="font-medium flex-1 cursor-pointer hover:underline" onClick={() => handleEdit(item.id, item.name, item.amount.toString())}>{item.name}</span>
-                    <span className="font-mono text-green-400">+${Number(item.amount).toLocaleString()}</span>
+                    <span className="font-mono text-green-400">+{formatCurrency(Number(item.amount), currency)}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -150,7 +153,7 @@ export default function Cashflow() {
               </div>
             </div>
             <div className="text-right">
-              <span className="block text-2xl font-bold text-red-400">${totalExpense.toLocaleString()}</span>
+              <span className="block text-2xl font-bold text-red-400">{formatCurrency(totalExpense, currency)}</span>
               <span className="text-xs text-muted-foreground">/ month</span>
             </div>
           </div>
@@ -167,7 +170,7 @@ export default function Cashflow() {
                       placeholder="Name"
                     />
                     <div className="relative">
-                      <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">$</span>
+                      <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
                       <Input 
                         type="number"
                         value={editValues.amount}
@@ -196,7 +199,7 @@ export default function Cashflow() {
                 ) : (
                   <>
                     <span className="font-medium flex-1 cursor-pointer hover:underline" onClick={() => handleEdit(item.id, item.name, item.amount.toString())}>{item.name}</span>
-                    <span className="font-mono text-red-400">-${Number(item.amount).toLocaleString()}</span>
+                    <span className="font-mono text-red-400">-{formatCurrency(Number(item.amount), currency)}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 

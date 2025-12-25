@@ -1,7 +1,8 @@
-import { useSnapshots, useCashflows } from "@/hooks/use-finance";
+import { useSnapshots, useCashflows, useSettings } from "@/hooks/use-finance";
 import { MetricCard } from "@/components/MetricCard";
 import { ChartContainer } from "@/components/ChartContainer";
 import { SnapshotManager } from "@/components/SnapshotManager";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   ComposedChart, Line, Bar 
@@ -12,6 +13,8 @@ import { Loader2, TrendingUp, DollarSign, Target, ArrowUpCircle } from "lucide-r
 export default function Dashboard() {
   const { data: snapshots, isLoading: loadingSnapshots } = useSnapshots();
   const { data: cashflows, isLoading: loadingCashflows } = useCashflows();
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "USD";
 
   if (loadingSnapshots || loadingCashflows) {
     return (
@@ -81,7 +84,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard 
           title="Net Worth" 
-          value={`$${currentNetWorth.toLocaleString()}`}
+          value={formatCurrency(currentNetWorth, currency)}
           trend={netWorthTrend}
           trendUp={netWorthChange >= 0}
           icon={<Target size={32} />}
@@ -89,7 +92,7 @@ export default function Dashboard() {
         />
         <MetricCard 
           title="Monthly Surplus" 
-          value={`$${monthlySurplus.toLocaleString()}`}
+          value={formatCurrency(monthlySurplus, currency)}
           trend="Estimated"
           trendUp={monthlySurplus > 0}
           icon={<TrendingUp size={32} />}
@@ -97,7 +100,7 @@ export default function Dashboard() {
         />
         <MetricCard 
           title="Monthly Income" 
-          value={`$${monthlyIncome.toLocaleString()}`}
+          value={formatCurrency(monthlyIncome, currency)}
           icon={<DollarSign size={32} />}
           delay={200}
         />
@@ -135,14 +138,14 @@ export default function Dashboard() {
             <YAxis 
               stroke="rgba(255,255,255,0.3)"
               fontSize={12}
-              tickFormatter={(val) => `$${(val/1000).toFixed(0)}k`}
+              tickFormatter={(val) => `${getCurrencySymbol(currency)}${(val/1000).toFixed(0)}k`}
               tickLine={false}
               axisLine={false}
             />
             <Tooltip 
               contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
               itemStyle={{ color: 'white' }}
-              formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Net Worth']}
+              formatter={(value: any) => [formatCurrency(Number(value), currency), 'Net Worth']}
               labelFormatter={(label) => format(parseISO(label as string), 'MMMM yyyy')}
             />
             <Area 
@@ -167,7 +170,7 @@ export default function Dashboard() {
              <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Income</span>
-                  <span className="font-semibold text-green-400">${monthlyIncome.toLocaleString()}</span>
+                  <span className="font-semibold text-green-400">{formatCurrency(monthlyIncome, currency)}</span>
                 </div>
                 <div className="h-4 bg-muted rounded-full overflow-hidden">
                   <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }} />
@@ -178,7 +181,7 @@ export default function Dashboard() {
              <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Expenses</span>
-                  <span className="font-semibold text-red-400">${monthlyExpenses.toLocaleString()}</span>
+                  <span className="font-semibold text-red-400">{formatCurrency(monthlyExpenses, currency)}</span>
                 </div>
                 <div className="h-4 bg-muted rounded-full overflow-hidden">
                   <div 
@@ -192,7 +195,7 @@ export default function Dashboard() {
              <div className="space-y-2 mt-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-white font-medium">Net Surplus</span>
-                  <span className="font-semibold text-primary">${monthlySurplus.toLocaleString()}</span>
+                  <span className="font-semibold text-primary">{formatCurrency(monthlySurplus, currency)}</span>
                 </div>
                 <div className="h-4 bg-muted rounded-full overflow-hidden">
                   <div 

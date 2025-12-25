@@ -5,13 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Wallet } from "lucide-react";
-import { useCreateCashflow } from "@/hooks/use-finance";
+import { useCreateCashflow, useSettings } from "@/hooks/use-finance";
+import { getCurrencySymbol } from "@/lib/currency";
 
 export function AddCashflowDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
+  const { data: settings } = useSettings();
+  const currency = settings?.currency || "USD";
   
   const createCashflow = useCreateCashflow();
 
@@ -70,7 +73,7 @@ export function AddCashflowDialog() {
           <div className="space-y-2">
             <Label>Monthly Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-2.5 text-muted-foreground">{getCurrencySymbol(currency)}</span>
               <Input 
                 type="number" 
                 placeholder="0.00" 
