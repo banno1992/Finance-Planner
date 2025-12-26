@@ -1,5 +1,6 @@
-import { ArrowUpRight, ArrowDownRight, TrendingUp } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, TrendingUp, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface MetricCardProps {
   title: string;
@@ -9,6 +10,7 @@ interface MetricCardProps {
   icon?: React.ReactNode;
   className?: string;
   delay?: number;
+  tooltip?: string;
 }
 
 export function MetricCard({ 
@@ -18,7 +20,8 @@ export function MetricCard({
   trendUp, 
   icon, 
   className,
-  delay = 0 
+  delay = 0,
+  tooltip
 }: MetricCardProps) {
   return (
     <div 
@@ -33,9 +36,23 @@ export function MetricCard({
       </div>
       
       <div className="relative z-10">
-        <h3 className="text-muted-foreground text-sm font-medium mb-1 uppercase tracking-wider">
-          {title}
-        </h3>
+        <div className="flex items-center gap-2 mb-1">
+          <h3 className="text-muted-foreground text-sm font-medium uppercase tracking-wider">
+            {title}
+          </h3>
+          {tooltip && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info size={14} className="text-muted-foreground hover:text-primary cursor-help transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="text-xs">{tooltip}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
         <div className="flex items-baseline gap-2">
           <span className="text-3xl md:text-4xl font-bold font-display text-foreground tracking-tight">
             {value}

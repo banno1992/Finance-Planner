@@ -89,6 +89,7 @@ export default function Dashboard() {
           trendUp={netWorthChange >= 0}
           icon={<Target size={32} />}
           delay={0}
+          tooltip="Total of all your assets minus all your debts. This is your overall financial position."
         />
         <MetricCard 
           title="Monthly Surplus" 
@@ -97,18 +98,21 @@ export default function Dashboard() {
           trendUp={monthlySurplus > 0}
           icon={<TrendingUp size={32} />}
           delay={100}
+          tooltip="Monthly income minus monthly expenses. This is how much you can potentially save each month."
         />
         <MetricCard 
           title="Monthly Income" 
           value={formatCurrency(monthlyIncome, currency)}
           icon={<DollarSign size={32} />}
           delay={200}
+          tooltip="Sum of all your recurring monthly income sources."
         />
         <MetricCard 
           title="Savings Rate" 
           value={savingsRate}
           icon={<ArrowUpCircle size={32} />}
           delay={300}
+          tooltip="What percentage of your income you save each month. Higher is better for wealth building."
         />
       </div>
 
@@ -118,8 +122,8 @@ export default function Dashboard() {
         description="Historical net worth (solid) combined with future projection based on current surplus (dotted)."
         className="min-h-[400px]"
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+        <ResponsiveContainer width="100%" height={300}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 50, bottom: 20 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
