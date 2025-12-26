@@ -103,7 +103,7 @@ export default function Analytics() {
            <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span>First $10k</span>
+                  <span>First {formatCurrency(10000, currency)}</span>
                   <span className="text-primary">Achieved</span>
                 </div>
                 <div className="h-2 bg-primary/20 rounded-full overflow-hidden">
@@ -112,7 +112,7 @@ export default function Analytics() {
               </div>
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span>$100k Net Worth</span>
+                  <span>{formatCurrency(100000, currency)} Net Worth</span>
                   <span className="text-muted-foreground">In Progress</span>
                 </div>
                 <div className="h-2 bg-muted rounded-full overflow-hidden">

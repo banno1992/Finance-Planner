@@ -1,6 +1,6 @@
-import { ArrowUpRight, ArrowDownRight, TrendingUp, Info } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, TrendingUp, Info, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { useState } from "react";
 
 interface MetricCardProps {
   title: string;
@@ -23,6 +23,8 @@ export function MetricCard({
   delay = 0,
   tooltip
 }: MetricCardProps) {
+  const [showTooltip, setShowTooltip] = useState(false);
+
   return (
     <div 
       className={cn(
@@ -41,18 +43,20 @@ export function MetricCard({
             {title}
           </h3>
           {tooltip && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info size={14} className="text-muted-foreground hover:text-primary cursor-help transition-colors" />
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  <p className="text-xs">{tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <button
+              onClick={() => setShowTooltip(!showTooltip)}
+              className="text-muted-foreground hover:text-primary cursor-help transition-colors flex-shrink-0"
+              aria-label={`Toggle ${title} info`}
+            >
+              {showTooltip ? <ChevronUp size={14} /> : <Info size={14} />}
+            </button>
           )}
         </div>
+        {tooltip && showTooltip && (
+          <p className="text-xs text-muted-foreground mb-3 p-2 bg-white/5 rounded border border-white/10">
+            {tooltip}
+          </p>
+        )}
         <div className="flex items-baseline gap-2">
           <span className="text-3xl md:text-4xl font-bold font-display text-foreground tracking-tight">
             {value}
