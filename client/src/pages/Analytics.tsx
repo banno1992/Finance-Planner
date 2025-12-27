@@ -42,17 +42,19 @@ export default function Analytics() {
     };
   });
 
-  // Wealth distribution by category
-  const wealthDistribution = latestSnapshot && categories ? 
-    categories
-      .map(cat => {
-        const detail = latestSnapshot.details?.find((d: any) => d.categoryId === cat.id);
-        const balance = detail ? Number(detail.balance) : 0;
-        return { name: cat.name, value: Math.abs(balance), balance };
-      })
-      .filter(item => item.balance !== 0)
-      .sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
-    : [];
+  // Wealth distribution by category - separate assets and debts
+  const { assets, debts } = latestSnapshot && categories ? 
+    categories.reduce((acc, cat) => {
+      const detail = latestSnapshot.details?.find((d: any) => d.categoryId === cat.id);
+      const balance = detail ? Number(detail.balance) : 0;
+      if (balance > 0) {
+        acc.assets.push({ name: cat.name, value: balance });
+      } else if (balance < 0) {
+        acc.debts.push({ name: cat.name, value: Math.abs(balance) });
+      }
+      return acc;
+    }, { assets: [] as any[], debts: [] as any[] })
+    : { assets: [], debts: [] };
 
   // Calculate projected metrics from cashflows
   const monthlyIncome = cashflows
@@ -137,43 +139,77 @@ export default function Analytics() {
       </ChartContainer>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {wealthDistribution.length > 0 && (
+        {(assets.length > 0 || debts.length > 0) && (
           <ChartContainer 
-            title="Wealth Distribution" 
-            description="Your net worth breakdown by asset category."
+            title="Assets vs Debts Distribution" 
+            description="Inner ring shows assets, outer ring shows debts."
           >
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={350}>
               <PieChart>
                 <Pie
-                  data={wealthDistribution}
+                  data={assets}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
+                  innerRadius={40}
+                  outerRadius={80}
                   paddingAngle={2}
                   dataKey="value"
+                  label={false}
                 >
-                  {wealthDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {assets.map((entry, index) => (
+                    <Cell key={`asset-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Pie
+                  data={debts}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={90}
+                  outerRadius={120}
+                  paddingAngle={2}
+                  dataKey="value"
+                  label={false}
+                >
+                  {debts.map((entry, index) => (
+                    <Cell key={`debt-${index}`} fill={`hsl(var(--destructive))`} opacity={0.3 + (index * 0.1)} />
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: any) => [formatCurrency(Number(value), currency), 'Balance']}
+                  formatter={(value: any) => [formatCurrency(Number(value), currency), 'Amount']}
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
                   itemStyle={{ color: 'white' }}
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="mt-4 space-y-2 text-sm">
-              {wealthDistribution.map((item, idx) => (
-                <div key={item.name} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                    <span className="text-muted-foreground">{item.name}</span>
-                  </div>
-                  <span className="font-mono text-xs">{formatCurrency(item.balance, currency)}</span>
+            <div className="mt-4 space-y-3">
+              <div>
+                <p className="text-xs font-semibold text-green-400 mb-2">Assets (Inner Ring)</p>
+                <div className="space-y-1">
+                  {assets.map((item, idx) => (
+                    <div key={item.name} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                        <span className="text-muted-foreground">{item.name}</span>
+                      </div>
+                      <span className="font-mono">{formatCurrency(item.value, currency)}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-red-400 mb-2">Debts (Outer Ring)</p>
+                <div className="space-y-1">
+                  {debts.map((item, idx) => (
+                    <div key={item.name} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'hsl(var(--destructive))' }}></div>
+                        <span className="text-muted-foreground">{item.name}</span>
+                      </div>
+                      <span className="font-mono">{formatCurrency(item.value, currency)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </ChartContainer>
         )}

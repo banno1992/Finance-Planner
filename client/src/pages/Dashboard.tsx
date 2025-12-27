@@ -128,7 +128,7 @@ export default function Dashboard() {
         description="Historical net worth (solid), projected based on surplus (dashed), and actual monthly growth (dotted)."
         className="min-h-[400px]"
       >
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={450}>
           <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -172,18 +172,20 @@ export default function Dashboard() {
               dataKey="projectedAmount"
               stroke="hsl(var(--primary))"
               strokeWidth={2}
-              strokeDasharray="5 5"
+              strokeDasharray="8 4"
               dot={false}
               name="Projected (Planned Surplus)"
+              isAnimationActive={false}
             />
             <Line
               type="monotone"
               dataKey="actualAmount"
-              stroke="hsl(var(--success))"
+              stroke="#22c55e"
               strokeWidth={2}
-              strokeDasharray="2 2"
+              strokeDasharray="4 4"
               dot={false}
               name="Projected (Actual Surplus)"
+              isAnimationActive={false}
             />
             <Legend 
               verticalAlign="top" 
