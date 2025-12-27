@@ -132,7 +132,24 @@ export function SnapshotManager() {
                   <div className="flex items-center gap-4 flex-1">
                     <div>
                       <p className="font-semibold">{format(parseISO(snapshot.month), 'MMMM yyyy')}</p>
-                      <p className="text-sm text-muted-foreground">{formatCurrency(Number(snapshot.totalNetWorth), currency)}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground">{formatCurrency(Number(snapshot.totalNetWorth), currency)}</p>
+                        {sortedSnapshots.length > 1 && snapshot.id !== sortedSnapshots[0].id && (
+                          <>
+                            {(() => {
+                              const currentIdx = sortedSnapshots.findIndex(s => s.id === snapshot.id);
+                              const prevSnapshot = currentIdx > 0 ? sortedSnapshots[currentIdx - 1] : null;
+                              if (!prevSnapshot) return null;
+                              const diff = Number(snapshot.totalNetWorth) - Number(prevSnapshot.totalNetWorth);
+                              return (
+                                <span className={`text-xs font-semibold ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                  {diff >= 0 ? '+' : ''}{formatCurrency(diff, currency)}
+                                </span>
+                              );
+                            })()}
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

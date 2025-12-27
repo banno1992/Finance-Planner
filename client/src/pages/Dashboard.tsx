@@ -119,11 +119,11 @@ export default function Dashboard() {
       {/* Main Chart */}
       <ChartContainer 
         title="Wealth Trajectory" 
-        description="Historical net worth (solid) combined with future projection based on current surplus (dotted)."
+        description="Historical net worth (solid), projected based on surplus (dashed), and actual monthly growth (dotted)."
         className="min-h-[400px]"
       >
         <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 50, bottom: 20 }}>
+          <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
@@ -159,9 +159,8 @@ export default function Dashboard() {
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorValue)" 
+              name="Net Worth"
             />
-            {/* Split visualization would require more complex data structuring or two separate lines, 
-                for now using a single continuous line for visual flow */}
           </ComposedChart>
         </ResponsiveContainer>
       </ChartContainer>
