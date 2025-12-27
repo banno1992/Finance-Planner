@@ -5,7 +5,7 @@ import { SnapshotManager } from "@/components/SnapshotManager";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  ComposedChart, Line, Bar 
+  ComposedChart, Line, Bar, Legend
 } from "recharts";
 import { format, addMonths, differenceInMonths, parseISO } from "date-fns";
 import { Loader2, TrendingUp, DollarSign, Target, ArrowUpCircle } from "lucide-react";
@@ -60,12 +60,18 @@ export default function Dashboard() {
     type: 'historical'
   }));
 
+  // Calculate actual monthly surplus from historical data
+  const actualMonthlySurplus = historicalData.length > 1
+    ? historicalData.slice(1).reduce((sum, curr, idx) => sum + (curr.amount - historicalData[idx].amount), 0) / (historicalData.length - 1)
+    : 0;
+
   const lastDate = currentSnapshot ? new Date(currentSnapshot.month) : new Date();
   const predictionData = Array.from({ length: projectionMonths }).map((_, i) => {
     const date = addMonths(lastDate, i + 1);
     return {
       date: format(date, 'yyyy-MM-dd'),
-      amount: currentNetWorth + (monthlySurplus * (i + 1)),
+      projectedAmount: currentNetWorth + (monthlySurplus * (i + 1)),
+      actualAmount: currentNetWorth + (actualMonthlySurplus * (i + 1)),
       type: 'prediction'
     };
   });
@@ -159,7 +165,30 @@ export default function Dashboard() {
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorValue)" 
-              name="Net Worth"
+              name="Historical Net Worth"
+            />
+            <Line
+              type="monotone"
+              dataKey="projectedAmount"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              dot={false}
+              name="Projected (Planned Surplus)"
+            />
+            <Line
+              type="monotone"
+              dataKey="actualAmount"
+              stroke="hsl(var(--success))"
+              strokeWidth={2}
+              strokeDasharray="2 2"
+              dot={false}
+              name="Projected (Actual Surplus)"
+            />
+            <Legend 
+              verticalAlign="top" 
+              height={36}
+              wrapperStyle={{ paddingBottom: '10px' }}
             />
           </ComposedChart>
         </ResponsiveContainer>
