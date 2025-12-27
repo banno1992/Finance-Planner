@@ -1,14 +1,20 @@
-import { useSnapshots, useSettings } from "@/hooks/use-finance";
+import { useSnapshots, useSettings, useCategories, useCashflows } from "@/hooks/use-finance";
 import { ChartContainer } from "@/components/ChartContainer";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
 
+const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--destructive))', '#a78bfa', '#fb923c', '#06b6d4', '#ec4899'];
+
 export default function Analytics() {
-  const { data: snapshots, isLoading } = useSnapshots();
+  const { data: snapshots, isLoading: snapshotsLoading } = useSnapshots();
+  const { data: categories } = useCategories();
+  const { data: cashflows } = useCashflows();
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
+
+  const isLoading = snapshotsLoading;
 
   if (isLoading) {
     return (
@@ -23,6 +29,8 @@ export default function Analytics() {
     new Date(a.month).getTime() - new Date(b.month).getTime()
   );
 
+  const latestSnapshot = sortedSnapshots[sortedSnapshots.length - 1];
+
   // Calculate monthly growth
   const growthData = sortedSnapshots.slice(1).map((curr, idx) => {
     const prev = sortedSnapshots[idx];
@@ -34,8 +42,61 @@ export default function Analytics() {
     };
   });
 
+  // Wealth distribution by category
+  const wealthDistribution = latestSnapshot && categories ? 
+    categories
+      .map(cat => {
+        const detail = latestSnapshot.details?.find((d: any) => d.categoryId === cat.id);
+        const balance = detail ? Number(detail.balance) : 0;
+        return { name: cat.name, value: Math.abs(balance), balance };
+      })
+      .filter(item => item.balance !== 0)
+      .sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance))
+    : [];
+
+  // Calculate projected metrics from cashflows
+  const monthlyIncome = cashflows
+    ?.filter(c => c.type === 'income')
+    .reduce((sum, c) => sum + Number(c.amount), 0) || 0;
+  
+  const monthlyExpenses = cashflows
+    ?.filter(c => c.type === 'expense')
+    .reduce((sum, c) => sum + Number(c.amount), 0) || 0;
+  
+  const projectedSurplus = monthlyIncome - monthlyExpenses;
+  const projectedSavingsRate = monthlyIncome > 0 ? ((projectedSurplus / monthlyIncome) * 100).toFixed(1) : "0";
+
+  // Calculate actual metrics from historical data
+  const getTrailingAverage = (months: number) => {
+    if (growthData.length < months) return null;
+    const recent = growthData.slice(-months);
+    return recent.reduce((sum, d) => sum + d.growth, 0) / months;
+  };
+
+  const trailing3Mo = getTrailingAverage(3);
+  const trailing6Mo = getTrailingAverage(6);
+  const trailing12Mo = getTrailingAverage(12);
+
+  // Calculate actual savings rate and surplus from historical data
+  let actualSurplus = "N/A";
+  let actualSavingsRate = "N/A";
+  if (growthData.length > 0) {
+    const avgGrowth = growthData.reduce((sum, d) => sum + d.growth, 0) / growthData.length;
+    actualSurplus = formatCurrency(avgGrowth, currency);
+    
+    if (monthlyIncome > 0) {
+      const actualRate = (avgGrowth / monthlyIncome * 100).toFixed(1);
+      actualSavingsRate = `${actualRate}%`;
+    }
+  }
+
+  const surplusGap = monthlyIncome > 0 ? (projectedSurplus - (trailing3Mo || 0)).toFixed(0) : "N/A";
+  const savingsRateGap = trailing3Mo !== null && monthlyIncome > 0 
+    ? (parseFloat(projectedSavingsRate) - (trailing3Mo / monthlyIncome * 100)).toFixed(1) 
+    : "N/A";
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       <div>
         <h2 className="text-3xl font-display font-bold text-white">Analytics</h2>
         <p className="text-muted-foreground mt-1">Deep dive into your wealth accumulation</p>
@@ -75,51 +136,115 @@ export default function Analytics() {
         </ResponsiveContainer>
       </ChartContainer>
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {wealthDistribution.length > 0 && (
+          <ChartContainer 
+            title="Wealth Distribution" 
+            description="Your net worth breakdown by asset category."
+          >
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={wealthDistribution}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={100}
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {wealthDistribution.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(value: any) => [formatCurrency(Number(value), currency), 'Balance']}
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
+                  itemStyle={{ color: 'white' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="mt-4 space-y-2 text-sm">
+              {wealthDistribution.map((item, idx) => (
+                <div key={item.name} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
+                    <span className="text-muted-foreground">{item.name}</span>
+                  </div>
+                  <span className="font-mono text-xs">{formatCurrency(item.balance, currency)}</span>
+                </div>
+              ))}
+            </div>
+          </ChartContainer>
+        )}
+
+        <div className="glass-card p-6 rounded-2xl">
+          <h3 className="font-display text-lg font-semibold mb-4">Advanced Insights</h3>
+          <div className="space-y-4 text-sm">
+            <div>
+              <p className="text-muted-foreground mb-1">3-Month Trailing Avg</p>
+              <p className="text-base font-semibold text-primary">{trailing3Mo !== null ? formatCurrency(trailing3Mo, currency) : "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1">6-Month Trailing Avg</p>
+              <p className="text-base font-semibold text-primary">{trailing6Mo !== null ? formatCurrency(trailing6Mo, currency) : "N/A"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1">12-Month Trailing Avg</p>
+              <p className="text-base font-semibold text-primary">{trailing12Mo !== null ? formatCurrency(trailing12Mo, currency) : "N/A"}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {sortedSnapshots.length >= 3 ? (
           <div className="glass-card p-6 rounded-2xl">
-            <h3 className="font-display text-lg font-semibold mb-4">Insights</h3>
-            <div className="space-y-3 text-sm text-muted-foreground">
-              {growthData.length > 0 && (
-                <>
-                  <p>Average monthly growth: <span className="text-primary font-semibold">{formatCurrency(growthData.reduce((sum, d) => sum + d.growth, 0) / growthData.length, currency)}</span></p>
-                  <p>Best month: <span className="text-green-400 font-semibold">{formatCurrency(Math.max(...growthData.map(d => d.growth)), currency)}</span></p>
-                  <p>Total growth: <span className="text-primary font-semibold">{formatCurrency(growthData.reduce((sum, d) => sum + d.growth, 0), currency)}</span></p>
-                </>
-              )}
+            <h3 className="font-display text-lg font-semibold mb-4">Savings Analysis</h3>
+            <div className="space-y-4 text-sm">
+              <div>
+                <p className="text-muted-foreground mb-1">Projected Monthly Surplus</p>
+                <p className="text-base font-semibold text-green-400">{formatCurrency(projectedSurplus, currency)}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground mb-1">Actual Monthly Surplus (Avg)</p>
+                <p className="text-base font-semibold text-blue-400">{actualSurplus}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground mb-1">Surplus Gap</p>
+                <p className={`text-base font-semibold ${surplusGap === "N/A" || Number(surplusGap) >= 0 ? "text-primary" : "text-destructive"}`}>
+                  {surplusGap === "N/A" ? "N/A" : formatCurrency(Number(surplusGap), currency)}
+                </p>
+              </div>
             </div>
           </div>
         ) : (
           <div className="glass-card p-6 rounded-2xl">
-            <h3 className="font-display text-lg font-semibold mb-4">Insights</h3>
+            <h3 className="font-display text-lg font-semibold mb-4">Savings Analysis</h3>
             <p className="text-muted-foreground text-sm">
-              Track at least 3 months of data to unlock detailed trend analysis and personalized recommendations.
+              Track at least 3 months of data to see savings analysis and insights.
             </p>
           </div>
         )}
         
         <div className="glass-card p-6 rounded-2xl">
-           <h3 className="font-display text-lg font-semibold mb-4">Milestone Tracker</h3>
-           <div className="space-y-4">
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span>First {formatCurrency(10000, currency)}</span>
-                  <span className="text-primary">Achieved</span>
-                </div>
-                <div className="h-2 bg-primary/20 rounded-full overflow-hidden">
-                  <div className="h-full bg-primary w-full" />
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span>{formatCurrency(100000, currency)} Net Worth</span>
-                  <span className="text-muted-foreground">In Progress</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-primary w-[45%]" />
-                </div>
-              </div>
-           </div>
+          <h3 className="font-display text-lg font-semibold mb-4">Savings Rate Comparison</h3>
+          <div className="space-y-4 text-sm">
+            <div>
+              <p className="text-muted-foreground mb-1">Projected Savings Rate</p>
+              <p className="text-base font-semibold text-green-400">{projectedSavingsRate}%</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1">Actual Savings Rate (Avg)</p>
+              <p className="text-base font-semibold text-blue-400">{actualSavingsRate}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1">Rate Gap</p>
+              <p className={`text-base font-semibold ${savingsRateGap === "N/A" || Number(savingsRateGap) >= 0 ? "text-primary" : "text-destructive"}`}>
+                {savingsRateGap === "N/A" ? "N/A" : `${savingsRateGap}%`}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
