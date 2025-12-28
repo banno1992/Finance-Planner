@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useSnapshots, useSettings, useCategories, useCashflows } from "@/hooks/use-finance";
 import { ChartContainer } from "@/components/ChartContainer";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, PieChart, Pie, Cell, Legend } from "recharts";
 import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
 
@@ -13,6 +14,9 @@ export default function Analytics() {
   const { data: cashflows } = useCashflows();
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
+  
+  const [visibleAssets, setVisibleAssets] = useState<Set<string>>(new Set());
+  const [visibleDebts, setVisibleDebts] = useState<Set<string>>(new Set());
 
   const isLoading = snapshotsLoading;
 
@@ -142,75 +146,112 @@ export default function Analytics() {
         {(assets.length > 0 || debts.length > 0) && (
           <ChartContainer 
             title="Assets vs Debts Distribution" 
-            description="Inner ring shows assets, outer ring shows debts."
+            description="Inner ring shows assets, outer ring shows debts proportionally."
           >
-            <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie
-                  data={assets}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={false}
-                >
-                  {assets.map((entry, index) => (
-                    <Cell key={`asset-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Pie
-                  data={debts}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={90}
-                  outerRadius={120}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={false}
-                >
-                  {debts.map((entry, index) => (
-                    <Cell key={`debt-${index}`} fill={`hsl(var(--destructive))`} opacity={0.3 + (index * 0.1)} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value: any) => [formatCurrency(Number(value), currency), 'Amount']}
-                  contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
-                  itemStyle={{ color: 'white' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className="mt-4 space-y-3">
-              <div>
-                <p className="text-xs font-semibold text-green-400 mb-2">Assets (Inner Ring)</p>
-                <div className="space-y-1">
-                  {assets.map((item, idx) => (
-                    <div key={item.name} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
-                        <span className="text-muted-foreground">{item.name}</span>
+            {(() => {
+              const totalAssets = assets.reduce((sum, a) => sum + a.value, 0);
+              const totalDebts = debts.reduce((sum, d) => sum + d.value, 0);
+              const total = totalAssets + totalDebts;
+              const assetsAngle = (totalAssets / total) * 360;
+              const debtsStartAngle = -assetsAngle;
+              const debtsEndAngle = -360;
+              
+              const filteredAssets = visibleAssets.size === 0 ? assets : assets.filter(a => visibleAssets.has(a.name));
+              const filteredDebts = visibleDebts.size === 0 ? debts : debts.filter(d => visibleDebts.has(d.name));
+              
+              return (
+                <>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <PieChart>
+                      <Pie
+                        data={filteredAssets}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={40}
+                        outerRadius={80}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={false}
+                        endAngle={-assetsAngle}
+                      >
+                        {filteredAssets.map((entry, index) => (
+                          <Cell key={`asset-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Pie
+                        data={filteredDebts}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={90}
+                        outerRadius={120}
+                        paddingAngle={2}
+                        dataKey="value"
+                        label={false}
+                        startAngle={debtsStartAngle}
+                        endAngle={debtsEndAngle}
+                      >
+                        {filteredDebts.map((entry, index) => (
+                          <Cell key={`debt-${index}`} fill={`hsl(var(--destructive))`} opacity={0.4 + (index * 0.15)} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: any) => [formatCurrency(Number(value), currency), 'Amount']}
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
+                        itemStyle={{ color: 'white' }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold text-green-400 mb-2">Assets (Inner Ring) - {((totalAssets / total) * 100).toFixed(0)}%</p>
+                      <div className="space-y-1">
+                        {assets.map((item, idx) => (
+                          <button
+                            key={item.name}
+                            onClick={() => setVisibleAssets(prev => {
+                              const next = new Set(prev);
+                              if (next.has(item.name)) next.delete(item.name);
+                              else next.add(item.name);
+                              return next;
+                            })}
+                            className="w-full text-left flex items-center justify-between text-xs hover:opacity-80 transition-opacity"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: visibleAssets.size === 0 || visibleAssets.has(item.name) ? 1 : 0.4 }}></div>
+                              <span className={visibleAssets.size === 0 || visibleAssets.has(item.name) ? "text-muted-foreground" : "text-muted-foreground/50"}>{item.name}</span>
+                            </div>
+                            <span className="font-mono">{formatCurrency(item.value, currency)}</span>
+                          </button>
+                        ))}
                       </div>
-                      <span className="font-mono">{formatCurrency(item.value, currency)}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-red-400 mb-2">Debts (Outer Ring)</p>
-                <div className="space-y-1">
-                  {debts.map((item, idx) => (
-                    <div key={item.name} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'hsl(var(--destructive))' }}></div>
-                        <span className="text-muted-foreground">{item.name}</span>
+                    <div>
+                      <p className="text-xs font-semibold text-red-400 mb-2">Debts (Outer Ring) - {((totalDebts / total) * 100).toFixed(0)}%</p>
+                      <div className="space-y-1">
+                        {debts.map((item, idx) => (
+                          <button
+                            key={item.name}
+                            onClick={() => setVisibleDebts(prev => {
+                              const next = new Set(prev);
+                              if (next.has(item.name)) next.delete(item.name);
+                              else next.add(item.name);
+                              return next;
+                            })}
+                            className="w-full text-left flex items-center justify-between text-xs hover:opacity-80 transition-opacity"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'hsl(var(--destructive))', opacity: visibleDebts.size === 0 || visibleDebts.has(item.name) ? 1 : 0.4 }}></div>
+                              <span className={visibleDebts.size === 0 || visibleDebts.has(item.name) ? "text-muted-foreground" : "text-muted-foreground/50"}>{item.name}</span>
+                            </div>
+                            <span className="font-mono">{formatCurrency(item.value, currency)}</span>
+                          </button>
+                        ))}
                       </div>
-                      <span className="font-mono">{formatCurrency(item.value, currency)}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                  </div>
+                </>
+              );
+            })()}
           </ChartContainer>
         )}
 
