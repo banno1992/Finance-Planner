@@ -39,14 +39,25 @@ export const cashflows = pgTable("cashflows", {
   type: text("type", { enum: ["income", "expense"] }).notNull(),
 });
 
+// Student loans
+export const studentLoans = pgTable("student_loans", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  loanAmount: numeric("loan_amount").notNull(),
+  annualInterestRate: numeric("annual_interest_rate").notNull(),
+  monthlyPayment: numeric("monthly_payment").notNull(),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertSnapshotSchema = createInsertSchema(snapshots).omit({ id: true });
 export const insertSnapshotDetailSchema = createInsertSchema(snapshotDetails).omit({ id: true });
 export const insertCashflowSchema = createInsertSchema(cashflows).omit({ id: true });
 export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
+export const insertStudentLoanSchema = createInsertSchema(studentLoans).omit({ id: true });
 
 export type Category = typeof categories.$inferSelect;
 export type Snapshot = typeof snapshots.$inferSelect;
 export type SnapshotDetail = typeof snapshotDetails.$inferSelect;
 export type Cashflow = typeof cashflows.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
+export type StudentLoan = typeof studentLoans.$inferSelect;

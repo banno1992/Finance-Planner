@@ -1,11 +1,12 @@
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Settings, PieChart, TrendingUp, Wallet, ArrowRightLeft } from "lucide-react";
+import { LayoutDashboard, Settings, PieChart, TrendingUp, Wallet, ArrowRightLeft, BookOpen } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 const NAV_ITEMS = [
   { label: "Dashboard", icon: LayoutDashboard, href: "/" },
   { label: "Analytics", icon: PieChart, href: "/analytics" },
   { label: "Cashflow", icon: ArrowRightLeft, href: "/cashflow" },
+  { label: "Student Loans", icon: BookOpen, href: "/student-loans" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 

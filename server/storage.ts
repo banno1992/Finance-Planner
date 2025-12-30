@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { 
-  categories, snapshots, snapshotDetails, cashflows, settings,
-  type Category, type Snapshot, type Cashflow,
+  categories, snapshots, snapshotDetails, cashflows, settings, studentLoans,
+  type Category, type Snapshot, type Cashflow, type StudentLoan,
   type InsertCategory, type InsertSnapshot, type InsertCashflow
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
@@ -28,6 +28,12 @@ export interface IStorage {
   // Settings
   getSettings(): Promise<{ currency: string }>;
   updateSettings(currency: string): Promise<{ currency: string }>;
+
+  // Student Loans
+  getStudentLoans(): Promise<StudentLoan[]>;
+  createStudentLoan(loan: any): Promise<StudentLoan>;
+  updateStudentLoan(id: number, loan: any): Promise<StudentLoan>;
+  deleteStudentLoan(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -138,6 +144,24 @@ export class DatabaseStorage implements IStorage {
       await db.update(settings).set({ currency }).where(eq(settings.id, existing[0].id));
     }
     return { currency };
+  }
+
+  async getStudentLoans(): Promise<StudentLoan[]> {
+    return await db.select().from(studentLoans);
+  }
+
+  async createStudentLoan(loan: any): Promise<StudentLoan> {
+    const [inserted] = await db.insert(studentLoans).values(loan).returning();
+    return inserted;
+  }
+
+  async updateStudentLoan(id: number, updates: any): Promise<StudentLoan> {
+    const [updated] = await db.update(studentLoans).set(updates).where(eq(studentLoans.id, id)).returning();
+    return updated;
+  }
+
+  async deleteStudentLoan(id: number): Promise<void> {
+    await db.delete(studentLoans).where(eq(studentLoans.id, id));
   }
 }
 

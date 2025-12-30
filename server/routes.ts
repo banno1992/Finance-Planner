@@ -89,5 +89,25 @@ export async function registerRoutes(
     res.status(204).end();
   });
 
+  app.get(api.studentLoans.list.path, async (_req, res) => {
+    const loans = await storage.getStudentLoans();
+    res.json(loans);
+  });
+
+  app.post(api.studentLoans.create.path, async (req, res) => {
+    const loan = await storage.createStudentLoan(req.body);
+    res.status(201).json(loan);
+  });
+
+  app.patch(api.studentLoans.update.path, async (req, res) => {
+    const loan = await storage.updateStudentLoan(parseInt(req.params.id), req.body);
+    res.json(loan);
+  });
+
+  app.delete(api.studentLoans.delete.path, async (req, res) => {
+    await storage.deleteStudentLoan(parseInt(req.params.id));
+    res.status(204).end();
+  });
+
   return httpServer;
 }

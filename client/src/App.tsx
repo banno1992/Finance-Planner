@@ -9,6 +9,7 @@ import Dashboard from "@/pages/Dashboard";
 import Cashflow from "@/pages/Cashflow";
 import Settings from "@/pages/Settings";
 import Analytics from "@/pages/Analytics";
+import StudentLoans from "@/pages/StudentLoans";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/cashflow" component={Cashflow} />
         <Route path="/analytics" component={Analytics} />
+        <Route path="/student-loans" component={StudentLoans} />
         <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
