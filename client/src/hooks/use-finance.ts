@@ -217,6 +217,67 @@ export function useUpdateSettings() {
   });
 }
 
+// ============================================
+// STUDENT LOANS
+// ============================================
+
+export function useStudentLoans() {
+  return useQuery({
+    queryKey: [api.studentLoans.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.studentLoans.list.path);
+      if (!res.ok) throw new Error("Failed to fetch student loans");
+      return api.studentLoans.list.responses[200].parse(await res.json());
+    },
+  });
+}
+
+export function useCreateStudentLoan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const validated = api.studentLoans.create.input.parse(data);
+      const res = await fetch(api.studentLoans.create.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+      });
+      if (!res.ok) throw new Error("Failed to create student loan");
+      return api.studentLoans.create.responses[201].parse(await res.json());
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.studentLoans.list.path] }),
+  });
+}
+
+export function useUpdateStudentLoan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const url = buildUrl(api.studentLoans.update.path, { id });
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update student loan");
+      return await res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.studentLoans.list.path] }),
+  });
+}
+
+export function useDeleteStudentLoan() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.studentLoans.delete.path, { id });
+      const res = await fetch(url, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete student loan");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.studentLoans.list.path] }),
+  });
+}
+
 export function useExportData() {
   return async () => {
     const [categories, cashflows, snapshots] = await Promise.all([
