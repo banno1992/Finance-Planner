@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Settings, PieChart, TrendingUp, Wallet, ArrowRightLeft, BookOpen } from "lucide-react";
+import { LayoutDashboard, Settings, PieChart, TrendingUp, Wallet, ArrowRightLeft, BookOpen, Home } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 const NAV_ITEMS = [
@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { label: "Analytics", icon: PieChart, href: "/analytics" },
   { label: "Cashflow", icon: ArrowRightLeft, href: "/cashflow" },
   { label: "Student Loans", icon: BookOpen, href: "/student-loans" },
+  { label: "Mortgage", icon: Home, href: "/mortgage" },
   { label: "Settings", icon: Settings, href: "/settings" },
 ];
 

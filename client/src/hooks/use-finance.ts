@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
-import { type Category, type Cashflow } from "@shared/schema";
+import { type Category, type Cashflow, type StudentLoan, type Mortgage } from "@shared/schema";
 import { z } from "zod";
 
 // ============================================
@@ -275,6 +275,67 @@ export function useDeleteStudentLoan() {
       if (!res.ok) throw new Error("Failed to delete student loan");
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.studentLoans.list.path] }),
+  });
+}
+
+// ============================================
+// MORTGAGES
+// ============================================
+
+export function useMortgages() {
+  return useQuery({
+    queryKey: [api.mortgages.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.mortgages.list.path);
+      if (!res.ok) throw new Error("Failed to fetch mortgages");
+      return api.mortgages.list.responses[200].parse(await res.json());
+    },
+  });
+}
+
+export function useCreateMortgage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const validated = api.mortgages.create.input.parse(data);
+      const res = await fetch(api.mortgages.create.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+      });
+      if (!res.ok) throw new Error("Failed to create mortgage");
+      return api.mortgages.create.responses[201].parse(await res.json());
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.mortgages.list.path] }),
+  });
+}
+
+export function useUpdateMortgage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const url = buildUrl(api.mortgages.update.path, { id });
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update mortgage");
+      return await res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.mortgages.list.path] }),
+  });
+}
+
+export function useDeleteMortgage() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.mortgages.delete.path, { id });
+      const res = await fetch(url, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete mortgage");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.mortgages.list.path] }),
   });
 }
 

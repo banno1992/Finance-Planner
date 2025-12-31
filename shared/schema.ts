@@ -48,12 +48,24 @@ export const studentLoans = pgTable("student_loans", {
   monthlyPayment: numeric("monthly_payment").notNull(),
 });
 
+// Mortgages
+export const mortgages = pgTable("mortgages", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  loanAmount: numeric("loan_amount").notNull(),
+  annualInterestRate: numeric("annual_interest_rate").notNull(),
+  monthlyPayment: numeric("monthly_payment").notNull(),
+  overpayment: numeric("overpayment").default("0"),
+  propertyValue: numeric("property_value").notNull(),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertSnapshotSchema = createInsertSchema(snapshots).omit({ id: true });
 export const insertSnapshotDetailSchema = createInsertSchema(snapshotDetails).omit({ id: true });
 export const insertCashflowSchema = createInsertSchema(cashflows).omit({ id: true });
 export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
 export const insertStudentLoanSchema = createInsertSchema(studentLoans).omit({ id: true });
+export const insertMortgageSchema = createInsertSchema(mortgages).omit({ id: true });
 
 export type Category = typeof categories.$inferSelect;
 export type Snapshot = typeof snapshots.$inferSelect;
@@ -61,3 +73,4 @@ export type SnapshotDetail = typeof snapshotDetails.$inferSelect;
 export type Cashflow = typeof cashflows.$inferSelect;
 export type Setting = typeof settings.$inferSelect;
 export type StudentLoan = typeof studentLoans.$inferSelect;
+export type Mortgage = typeof mortgages.$inferSelect;

@@ -4,10 +4,12 @@ import {
   insertSnapshotSchema, 
   insertCashflowSchema,
   insertStudentLoanSchema,
+  insertMortgageSchema,
   categories,
   snapshots,
   cashflows,
-  studentLoans
+  studentLoans,
+  mortgages
 } from "./schema";
 
 export const errorSchemas = {
@@ -127,6 +129,30 @@ export const api = {
     delete: {
       method: "DELETE" as const,
       path: "/api/student-loans/:id",
+      responses: { 204: z.void() },
+    },
+  },
+  mortgages: {
+    list: {
+      method: "GET" as const,
+      path: "/api/mortgages",
+      responses: { 200: z.array(z.custom<typeof mortgages.$inferSelect>()) },
+    },
+    create: {
+      method: "POST" as const,
+      path: "/api/mortgages",
+      input: insertMortgageSchema,
+      responses: { 201: z.custom<typeof mortgages.$inferSelect>() },
+    },
+    update: {
+      method: "PATCH" as const,
+      path: "/api/mortgages/:id",
+      input: insertMortgageSchema.partial(),
+      responses: { 200: z.custom<typeof mortgages.$inferSelect>() },
+    },
+    delete: {
+      method: "DELETE" as const,
+      path: "/api/mortgages/:id",
       responses: { 204: z.void() },
     },
   },

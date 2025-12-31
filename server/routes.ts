@@ -109,5 +109,25 @@ export async function registerRoutes(
     res.status(204).end();
   });
 
+  app.get(api.mortgages.list.path, async (_req, res) => {
+    const list = await storage.getMortgages();
+    res.json(list);
+  });
+
+  app.post(api.mortgages.create.path, async (req, res) => {
+    const item = await storage.createMortgage(req.body);
+    res.status(201).json(item);
+  });
+
+  app.patch(api.mortgages.update.path, async (req, res) => {
+    const item = await storage.updateMortgage(parseInt(req.params.id), req.body);
+    res.json(item);
+  });
+
+  app.delete(api.mortgages.delete.path, async (req, res) => {
+    await storage.deleteMortgage(parseInt(req.params.id));
+    res.status(204).end();
+  });
+
   return httpServer;
 }
