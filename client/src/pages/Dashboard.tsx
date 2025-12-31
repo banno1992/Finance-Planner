@@ -1,4 +1,5 @@
-import { useSnapshots, useCashflows, useSettings } from "@/hooks/use-finance";
+import { useState, useMemo } from "react";
+import { useSnapshots, useCashflows, useSettings, useStudentLoans, useMortgages } from "@/hooks/use-finance";
 import { MetricCard } from "@/components/MetricCard";
 import { ChartContainer } from "@/components/ChartContainer";
 import { SnapshotManager } from "@/components/SnapshotManager";
@@ -9,14 +10,21 @@ import {
 } from "recharts";
 import { format, addMonths, differenceInMonths, parseISO } from "date-fns";
 import { Loader2, TrendingUp, DollarSign, Target, ArrowUpCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
   const { data: snapshots, isLoading: loadingSnapshots } = useSnapshots();
   const { data: cashflows, isLoading: loadingCashflows } = useCashflows();
+  const { data: studentLoans, isLoading: loadingStudentLoans } = useStudentLoans();
+  const { data: mortgages, isLoading: loadingMortgages } = useMortgages();
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
 
-  if (loadingSnapshots || loadingCashflows) {
+  const [includeStudentLoans, setIncludeStudentLoans] = useState(false);
+  const [includeMortgage, setIncludeMortgage] = useState(false);
+
+  if (loadingSnapshots || loadingCashflows || loadingStudentLoans || loadingMortgages) {
     return (
       <div className="flex items-center justify-center h-full min-h-[500px]">
         <Loader2 className="animate-spin text-primary w-12 h-12" />
@@ -29,11 +37,21 @@ export default function Dashboard() {
     new Date(a.month).getTime() - new Date(b.month).getTime()
   );
 
+  const studentLoanDebt = studentLoans?.reduce((sum, loan) => sum + Number(loan.loanAmount), 0) || 0;
+  const mortgageEquity = mortgages?.reduce((sum, mortgage) => sum + (Number(mortgage.propertyValue) - Number(mortgage.loanAmount)), 0) || 0;
+
+  const getAdjustedNetWorth = (baseValue: number) => {
+    let adjusted = baseValue;
+    if (includeStudentLoans) adjusted -= studentLoanDebt;
+    if (includeMortgage) adjusted += mortgageEquity;
+    return adjusted;
+  };
+
   const currentSnapshot = sortedSnapshots[sortedSnapshots.length - 1];
   const previousSnapshot = sortedSnapshots[sortedSnapshots.length - 2];
   
-  const currentNetWorth = Number(currentSnapshot?.totalNetWorth || 0);
-  const prevNetWorth = Number(previousSnapshot?.totalNetWorth || 0);
+  const currentNetWorth = getAdjustedNetWorth(Number(currentSnapshot?.totalNetWorth || 0));
+  const prevNetWorth = getAdjustedNetWorth(Number(previousSnapshot?.totalNetWorth || 0));
   
   const netWorthChange = currentNetWorth - prevNetWorth;
   const netWorthTrend = prevNetWorth !== 0 
@@ -56,7 +74,7 @@ export default function Dashboard() {
   const projectionMonths = 24;
   const historicalData = sortedSnapshots.map(s => ({
     date: s.month,
-    amount: Number(s.totalNetWorth),
+    amount: getAdjustedNetWorth(Number(s.totalNetWorth)),
     type: 'historical'
   }));
 
@@ -88,15 +106,35 @@ export default function Dashboard() {
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard 
-          title="Net Worth" 
-          value={formatCurrency(currentNetWorth, currency)}
-          trend={netWorthTrend}
-          trendUp={netWorthChange >= 0}
-          icon={<Target size={32} />}
-          delay={0}
-          tooltip="Total of all your assets minus all your debts. This is your overall financial position."
-        />
+        <div className="space-y-4">
+          <MetricCard 
+            title="Net Worth" 
+            value={formatCurrency(currentNetWorth, currency)}
+            trend={netWorthTrend}
+            trendUp={netWorthChange >= 0}
+            icon={<Target size={32} />}
+            delay={0}
+            tooltip="Total of all your assets minus all your debts. This is your overall financial position."
+          />
+          <div className="flex flex-col gap-2 px-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="student-loans" 
+                checked={includeStudentLoans}
+                onCheckedChange={(checked) => setIncludeStudentLoans(!!checked)}
+              />
+              <Label htmlFor="student-loans" className="text-xs text-muted-foreground cursor-pointer">Include Student Loans (-{formatCurrency(studentLoanDebt, currency)})</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="mortgage" 
+                checked={includeMortgage}
+                onCheckedChange={(checked) => setIncludeMortgage(!!checked)}
+              />
+              <Label htmlFor="mortgage" className="text-xs text-muted-foreground cursor-pointer">Include House Equity (+{formatCurrency(mortgageEquity, currency)})</Label>
+            </div>
+          </div>
+        </div>
         <MetricCard 
           title="Monthly Surplus" 
           value={formatCurrency(monthlySurplus, currency)}
