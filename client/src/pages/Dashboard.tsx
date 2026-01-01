@@ -23,6 +23,7 @@ export default function Dashboard() {
 
   const [includeStudentLoans, setIncludeStudentLoans] = useState(false);
   const [includeMortgage, setIncludeMortgage] = useState(false);
+  const [truncateYAxis, setTruncateYAxis] = useState(false);
 
   if (loadingSnapshots || loadingCashflows || loadingStudentLoans || loadingMortgages) {
     return (
@@ -165,6 +166,16 @@ export default function Dashboard() {
         title="Wealth Trajectory" 
         description="Historical net worth (solid), projected based on surplus (dashed), and actual monthly growth (dotted)."
         className="min-h-[400px]"
+        headerActions={
+          <div className="flex items-center space-x-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+            <Checkbox 
+              id="truncate-y" 
+              checked={truncateYAxis}
+              onCheckedChange={(checked) => setTruncateYAxis(!!checked)}
+            />
+            <Label htmlFor="truncate-y" className="text-xs text-muted-foreground cursor-pointer">Truncate Y-Axis</Label>
+          </div>
+        }
       >
         <ResponsiveContainer width="100%" height={450}>
           <ComposedChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
@@ -189,6 +200,7 @@ export default function Dashboard() {
               tickFormatter={(val) => `${getCurrencySymbol(currency)}${(val/1000).toFixed(0)}k`}
               tickLine={false}
               axisLine={false}
+              domain={truncateYAxis ? ['auto', 'auto'] : [0, 'auto']}
             />
             <Tooltip 
               contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
@@ -203,7 +215,7 @@ export default function Dashboard() {
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorValue)" 
-              name="Historical Net Worth"
+              name="Historical"
             />
             <Line
               type="monotone"
@@ -212,7 +224,7 @@ export default function Dashboard() {
               strokeWidth={2}
               strokeDasharray="8 4"
               dot={false}
-              name="Projected (Planned Surplus)"
+              name="Projected (Planned)"
               isAnimationActive={false}
             />
             <Line
@@ -222,13 +234,14 @@ export default function Dashboard() {
               strokeWidth={2}
               strokeDasharray="4 4"
               dot={false}
-              name="Projected (Actual Surplus)"
+              name="Projected (Actual)"
               isAnimationActive={false}
             />
             <Legend 
-              verticalAlign="top" 
+              verticalAlign="bottom" 
               height={36}
-              wrapperStyle={{ paddingBottom: '10px' }}
+              iconType="circle"
+              wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }}
             />
           </ComposedChart>
         </ResponsiveContainer>

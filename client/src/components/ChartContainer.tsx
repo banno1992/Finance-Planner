@@ -8,6 +8,7 @@ interface ChartContainerProps {
   children: React.ReactNode;
   className?: string;
   action?: React.ReactNode;
+  headerActions?: React.ReactNode;
 }
 
 export function ChartContainer({ 
@@ -15,8 +16,10 @@ export function ChartContainer({
   description, 
   children, 
   className,
-  action
+  action,
+  headerActions
 }: ChartContainerProps) {
+  const finalAction = action || headerActions;
   return (
     <div className={cn("glass-card rounded-2xl p-6 flex flex-col h-full", className)}>
       <div className="flex items-start justify-between mb-6">
@@ -37,7 +40,7 @@ export function ChartContainer({
             )}
           </div>
         </div>
-        {action && <div>{action}</div>}
+        {finalAction && <div>{finalAction}</div>}
       </div>
       
       <div className="flex-1 w-full min-h-[250px] relative">
