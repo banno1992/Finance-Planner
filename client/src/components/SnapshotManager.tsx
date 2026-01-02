@@ -63,6 +63,18 @@ export function SnapshotManager() {
 
   return (
     <div className="space-y-3 flex flex-col h-full">
+      {!addingNew && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-8 text-xs order-first"
+          onClick={() => setAddingNew(true)}
+          data-testid="button-add-snapshot"
+        >
+          <Plus size={14} className="mr-1" /> Add Snapshot
+        </Button>
+      )}
+
       {addingNew && (
         <div className="border border-primary/20 rounded-lg p-4 bg-primary/5 space-y-3">
           <Label className="text-sm font-semibold">New Snapshot</Label>
@@ -248,17 +260,6 @@ export function SnapshotManager() {
           )}
         </div>
       </ScrollArea>
-
-      {!addingNew && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="w-full h-8 text-xs"
-          onClick={() => setAddingNew(true)}
-        >
-          <Plus size={14} className="mr-1" /> Add Snapshot
-        </Button>
-      )}
     </div>
   );
 }

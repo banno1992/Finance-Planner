@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useSnapshots, useCashflows, useSettings, useStudentLoans, useMortgages } from "@/hooks/use-finance";
 import { MetricCard } from "@/components/MetricCard";
 import { ChartContainer } from "@/components/ChartContainer";
@@ -9,9 +9,11 @@ import {
   ComposedChart, Line, Bar, Legend
 } from "recharts";
 import { format, addMonths, differenceInMonths, parseISO } from "date-fns";
-import { Loader2, TrendingUp, DollarSign, Target, ArrowUpCircle } from "lucide-react";
+import { Loader2, TrendingUp, DollarSign, Target, ArrowUpCircle, ChevronDown, ChevronUp, PlusCircle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export default function Dashboard() {
   const { data: snapshots, isLoading: loadingSnapshots } = useSnapshots();
@@ -24,6 +26,13 @@ export default function Dashboard() {
   const [includeStudentLoans, setIncludeStudentLoans] = useState(false);
   const [includeMortgage, setIncludeMortgage] = useState(false);
   const [truncateYAxis, setTruncateYAxis] = useState(false);
+  const [isCashflowOpen, setIsCashflowOpen] = useState(false);
+  
+  const snapshotsRef = useRef<HTMLDivElement>(null);
+
+  const scrollToSnapshots = () => {
+    snapshotsRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   if (loadingSnapshots || loadingCashflows || loadingStudentLoans || loadingMortgages) {
     return (
@@ -106,59 +115,125 @@ export default function Dashboard() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="space-y-4">
-          <MetricCard 
-            title="Net Worth" 
-            value={formatCurrency(currentNetWorth, currency)}
-            trend={netWorthTrend}
-            trendUp={netWorthChange >= 0}
-            icon={<Target size={32} />}
-            delay={0}
-            tooltip="Total of all your assets minus all your debts. This is your overall financial position."
-          />
-          <div className="flex flex-col gap-2 px-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="student-loans" 
-                checked={includeStudentLoans}
-                onCheckedChange={(checked) => setIncludeStudentLoans(!!checked)}
-              />
-              <Label htmlFor="student-loans" className="text-xs text-muted-foreground cursor-pointer">Include Student Loans (-{formatCurrency(studentLoanDebt, currency)})</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox 
-                id="mortgage" 
-                checked={includeMortgage}
-                onCheckedChange={(checked) => setIncludeMortgage(!!checked)}
-              />
-              <Label htmlFor="mortgage" className="text-xs text-muted-foreground cursor-pointer">Include House Equity (+{formatCurrency(mortgageEquity, currency)})</Label>
+      <div className="space-y-4">
+        <Button 
+          onClick={scrollToSnapshots}
+          className="w-full h-12 gap-2 text-lg font-semibold shadow-lg hover-elevate"
+          data-testid="button-add-wealth-snapshot-top"
+        >
+          <PlusCircle size={20} />
+          Add a wealth snapshot
+        </Button>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-4">
+            <MetricCard 
+              title="Net Worth" 
+              value={formatCurrency(currentNetWorth, currency)}
+              trend={netWorthTrend}
+              trendUp={netWorthChange >= 0}
+              icon={<Target size={32} />}
+              delay={0}
+              tooltip="Total of all your assets minus all your debts. This is your overall financial position."
+            />
+            <div className="flex flex-col gap-2 px-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="student-loans" 
+                  checked={includeStudentLoans}
+                  onCheckedChange={(checked) => setIncludeStudentLoans(!!checked)}
+                />
+                <Label htmlFor="student-loans" className="text-xs text-muted-foreground cursor-pointer">Include Student Loans (-{formatCurrency(studentLoanDebt, currency)})</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="mortgage" 
+                  checked={includeMortgage}
+                  onCheckedChange={(checked) => setIncludeMortgage(!!checked)}
+                />
+                <Label htmlFor="mortgage" className="text-xs text-muted-foreground cursor-pointer">Include House Equity (+{formatCurrency(mortgageEquity, currency)})</Label>
+              </div>
             </div>
           </div>
+          <MetricCard 
+            title="Monthly Surplus" 
+            value={formatCurrency(monthlySurplus, currency)}
+            trend="Estimated"
+            trendUp={monthlySurplus > 0}
+            icon={<TrendingUp size={32} />}
+            delay={100}
+            tooltip="Monthly income minus monthly expenses. This is how much you can potentially save each month."
+          />
+          <MetricCard 
+            title="Monthly Income" 
+            value={formatCurrency(monthlyIncome, currency)}
+            icon={<DollarSign size={32} />}
+            delay={200}
+            tooltip="Sum of all your recurring monthly income sources."
+          />
+          <div className="space-y-4">
+            <MetricCard 
+              title="Savings Rate" 
+              value={savingsRate}
+              icon={<ArrowUpCircle size={32} />}
+              delay={300}
+              tooltip="What percentage of your income you save each month. Higher is better for wealth building."
+            />
+            
+            <Collapsible
+              open={isCashflowOpen}
+              onOpenChange={setIsCashflowOpen}
+              className="w-full glass-card rounded-xl border border-white/10"
+            >
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" className="w-full justify-between hover:bg-white/5 h-10 px-4">
+                  <span className="text-sm font-medium">Cashflow Breakdown</span>
+                  {isCashflowOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="p-4 pt-0 space-y-4">
+                {/* Income Bar */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Income</span>
+                    <span className="font-semibold text-green-400">{formatCurrency(monthlyIncome, currency)}</span>
+                  </div>
+                  <div className="h-3 bg-muted rounded-full overflow-hidden">
+                    <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }} />
+                  </div>
+                </div>
+
+                {/* Expenses Bar */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Expenses</span>
+                    <span className="font-semibold text-red-400">{formatCurrency(monthlyExpenses, currency)}</span>
+                  </div>
+                  <div className="h-3 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-red-500 rounded-full" 
+                      style={{ width: `${Math.min((monthlyExpenses / monthlyIncome) * 100, 100)}%` }} 
+                    />
+                  </div>
+                </div>
+
+                {/* Surplus Bar */}
+                <div className="space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-white font-medium">Net Surplus</span>
+                    <span className="font-semibold text-primary">{formatCurrency(monthlySurplus, currency)}</span>
+                  </div>
+                  <div className="h-3 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary rounded-full" 
+                      style={{ width: `${Math.min((monthlySurplus / monthlyIncome) * 100, 100)}%` }} 
+                    />
+                  </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
         </div>
-        <MetricCard 
-          title="Monthly Surplus" 
-          value={formatCurrency(monthlySurplus, currency)}
-          trend="Estimated"
-          trendUp={monthlySurplus > 0}
-          icon={<TrendingUp size={32} />}
-          delay={100}
-          tooltip="Monthly income minus monthly expenses. This is how much you can potentially save each month."
-        />
-        <MetricCard 
-          title="Monthly Income" 
-          value={formatCurrency(monthlyIncome, currency)}
-          icon={<DollarSign size={32} />}
-          delay={200}
-          tooltip="Sum of all your recurring monthly income sources."
-        />
-        <MetricCard 
-          title="Savings Rate" 
-          value={savingsRate}
-          icon={<ArrowUpCircle size={32} />}
-          delay={300}
-          tooltip="What percentage of your income you save each month. Higher is better for wealth building."
-        />
       </div>
 
       {/* Main Chart */}
@@ -248,50 +323,7 @@ export default function Dashboard() {
       </ChartContainer>
 
       {/* Secondary Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <ChartContainer title="Cashflow Breakdown">
-          <div className="flex flex-col gap-4">
-             {/* Income Bar */}
-             <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Income</span>
-                  <span className="font-semibold text-green-400">{formatCurrency(monthlyIncome, currency)}</span>
-                </div>
-                <div className="h-4 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-green-500 rounded-full" style={{ width: '100%' }} />
-                </div>
-             </div>
-
-             {/* Expenses Bar */}
-             <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Expenses</span>
-                  <span className="font-semibold text-red-400">{formatCurrency(monthlyExpenses, currency)}</span>
-                </div>
-                <div className="h-4 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-red-500 rounded-full" 
-                    style={{ width: `${Math.min((monthlyExpenses / monthlyIncome) * 100, 100)}%` }} 
-                  />
-                </div>
-             </div>
-
-             {/* Surplus Bar */}
-             <div className="space-y-2 mt-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-white font-medium">Net Surplus</span>
-                  <span className="font-semibold text-primary">{formatCurrency(monthlySurplus, currency)}</span>
-                </div>
-                <div className="h-4 bg-muted rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary rounded-full" 
-                    style={{ width: `${Math.min((monthlySurplus / monthlyIncome) * 100, 100)}%` }} 
-                  />
-                </div>
-             </div>
-          </div>
-        </ChartContainer>
-
+      <div className="grid grid-cols-1 gap-8" ref={snapshotsRef}>
         <ChartContainer title="Net Worth Snapshots">
           <SnapshotManager />
         </ChartContainer>
