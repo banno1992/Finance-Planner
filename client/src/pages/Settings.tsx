@@ -1,11 +1,12 @@
-import { useCategories, useCreateCategory, useDeleteCategory, useExportData, useReorderCategories, useSettings, useUpdateSettings } from "@/hooks/use-finance";
+import { useCategories, useCreateCategory, useDeleteCategory, useExportData, useImportData, useReorderCategories, useSettings, useUpdateSettings } from "@/hooks/use-finance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
-import { Download, Upload, Plus, Trash2, GripVertical } from "lucide-react";
+import { useState, useRef } from "react";
+import { Download, Upload, Plus, Trash2, GripVertical, Loader2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "INR", "JPY"];
 
@@ -17,9 +18,51 @@ export default function Settings() {
   const reorderCategories = useReorderCategories();
   const updateSettings = useUpdateSettings();
   const exportData = useExportData();
+  const importData = useImportData();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [newCatName, setNewCatName] = useState("");
   const [draggedId, setDraggedId] = useState<number | null>(null);
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const content = event.target?.result as string;
+        const data = JSON.parse(content);
+        
+        // Basic validation
+        if (!data.categories || !data.snapshots) {
+          throw new Error("Invalid backup file format");
+        }
+
+        if (confirm("This will overwrite all current data. Are you sure?")) {
+          await importData.mutateAsync(data);
+          toast({
+            title: "Success",
+            description: "Data imported successfully",
+          });
+        }
+      } catch (err: any) {
+        toast({
+          title: "Import Failed",
+          description: err.message,
+          variant: "destructive",
+        });
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,11 +192,19 @@ export default function Settings() {
               <Button 
                 variant="outline" 
                 className="justify-start h-12 gap-3"
-                onClick={() => alert("Import feature coming soon")}
+                onClick={handleImportClick}
+                disabled={importData.isPending}
               >
-                <Upload size={18} />
+                {importData.isPending ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
                 Import Data
               </Button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".json"
+                className="hidden"
+              />
             </div>
           </div>
 

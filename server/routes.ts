@@ -129,5 +129,14 @@ export async function registerRoutes(
     res.status(204).end();
   });
 
+  app.post("/api/import", async (req, res) => {
+    try {
+      await storage.importData(req.body);
+      res.json({ message: "Data imported successfully" });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
   return httpServer;
 }

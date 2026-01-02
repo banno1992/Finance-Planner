@@ -341,10 +341,12 @@ export function useDeleteMortgage() {
 
 export function useExportData() {
   return async () => {
-    const [categories, cashflows, snapshots] = await Promise.all([
+    const [categories, cashflows, snapshots, studentLoans, mortgages] = await Promise.all([
       fetch(api.categories.list.path).then(r => r.json()),
       fetch(api.cashflows.list.path).then(r => r.json()),
-      fetch(api.snapshots.list.path).then(r => r.json())
+      fetch(api.snapshots.list.path).then(r => r.json()),
+      fetch(api.studentLoans.list.path).then(r => r.json()),
+      fetch(api.mortgages.list.path).then(r => r.json())
     ]);
 
     const data = {
@@ -352,7 +354,9 @@ export function useExportData() {
       timestamp: new Date().toISOString(),
       categories,
       cashflows,
-      snapshots
+      snapshots,
+      studentLoans,
+      mortgages
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -365,4 +369,25 @@ export function useExportData() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+}
+
+export function useImportData() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch("/api/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to import data");
+      }
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries();
+    },
+  });
 }

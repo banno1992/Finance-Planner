@@ -68,9 +68,16 @@ export const insertStudentLoanSchema = createInsertSchema(studentLoans).omit({ i
 export const insertMortgageSchema = createInsertSchema(mortgages).omit({ id: true });
 
 export type Category = typeof categories.$inferSelect;
+export type InsertCategory = typeof categories.$inferInsert;
 export type Snapshot = typeof snapshots.$inferSelect;
+export type InsertSnapshot = typeof snapshots.$inferInsert;
 export type SnapshotDetail = typeof snapshotDetails.$inferSelect;
+export type InsertSnapshotDetail = typeof snapshotDetails.$inferInsert;
 export type Cashflow = typeof cashflows.$inferSelect;
+export type InsertCashflow = typeof cashflows.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
+export type InsertSetting = typeof settings.$inferInsert;
 export type StudentLoan = typeof studentLoans.$inferSelect;
+export type InsertStudentLoan = typeof studentLoans.$inferInsert;
 export type Mortgage = typeof mortgages.$inferSelect;
+export type InsertMortgage = typeof mortgages.$inferInsert;

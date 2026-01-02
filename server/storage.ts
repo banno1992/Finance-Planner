@@ -2,7 +2,8 @@ import { db } from "./db";
 import { 
   categories, snapshots, snapshotDetails, cashflows, settings, studentLoans, mortgages,
   type Category, type Snapshot, type Cashflow, type StudentLoan, type Mortgage,
-  type InsertCategory, type InsertSnapshot, type InsertCashflow
+  type InsertCategory, type InsertSnapshot, type InsertCashflow,
+  type InsertSnapshotDetail, type InsertStudentLoan, type InsertMortgage
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
@@ -40,6 +41,9 @@ export interface IStorage {
   createMortgage(mortgage: any): Promise<Mortgage>;
   updateMortgage(id: number, mortgage: any): Promise<Mortgage>;
   deleteMortgage(id: number): Promise<void>;
+
+  // Bulk Data
+  importData(data: any): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -186,6 +190,40 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMortgage(id: number): Promise<void> {
     await db.delete(mortgages).where(eq(mortgages.id, id));
+  }
+
+  async importData(data: any): Promise<void> {
+    await db.transaction(async (tx) => {
+      // Clear existing data
+      await tx.delete(snapshotDetails);
+      await tx.delete(snapshots);
+      await tx.delete(categories);
+      await tx.delete(cashflows);
+      await tx.delete(studentLoans);
+      await tx.delete(mortgages);
+
+      // Re-import categories
+      if (data.categories?.length) {
+        await tx.insert(categories).values(data.categories as InsertCategory[]);
+      }
+
+      // Re-import snapshots and details
+      if (data.snapshots?.length) {
+        for (const snap of data.snapshots) {
+          const { details, ...snapData } = snap;
+          const [insertedSnap] = await tx.insert(snapshots).values(snapData as InsertSnapshot).returning();
+          if (details?.length) {
+            const detailsWithSnapId = details.map((d: any) => ({ ...d, snapshotId: insertedSnap.id }));
+            await tx.insert(snapshotDetails).values(detailsWithSnapId as InsertSnapshotDetail[]);
+          }
+        }
+      }
+
+      // Re-import other entities
+      if (data.cashflows?.length) await tx.insert(cashflows).values(data.cashflows as InsertCashflow[]);
+      if (data.studentLoans?.length) await tx.insert(studentLoans).values(data.studentLoans as InsertStudentLoan[]);
+      if (data.mortgages?.length) await tx.insert(mortgages).values(data.mortgages as InsertMortgage[]);
+    });
   }
 }
 
