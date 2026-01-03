@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
-import { Trash2, Plus, Save, X, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Plus, Save, X, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 export function SnapshotManager() {
@@ -108,13 +108,13 @@ export function SnapshotManager() {
           </ScrollArea>
           <div className="flex gap-2 pt-2">
             <Button
-              variant="ghost"
+              variant="default"
               size="sm"
-              className="flex-1 h-8 text-xs"
-              onClick={handleAddNew}
+              className="flex-1 h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+              onClick={() => handleAddNew()}
               disabled={createSnapshot.isPending}
             >
-              Save
+              {createSnapshot.isPending ? <Loader2 size={14} className="animate-spin" /> : "Save"}
             </Button>
             <Button
               variant="ghost"

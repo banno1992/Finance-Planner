@@ -25,7 +25,7 @@ export default function Dashboard() {
 
   const [includeStudentLoans, setIncludeStudentLoans] = useState(false);
   const [includeMortgage, setIncludeMortgage] = useState(false);
-  const [truncateYAxis, setTruncateYAxis] = useState(false);
+  const [truncateYAxis, setTruncateYAxis] = useState(true);
   const [isCashflowOpen, setIsCashflowOpen] = useState(false);
   
   const snapshotsRef = useRef<HTMLDivElement>(null);
@@ -114,14 +114,57 @@ export default function Dashboard() {
         <p className="text-muted-foreground mt-1">Your financial health at a glance</p>
       </div>
 
+      {/* Info Section */}
+      <Collapsible className="glass-card rounded-2xl border border-white/10 overflow-hidden">
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-between p-6 hover:bg-white/5 h-auto">
+            <div className="flex items-center gap-3 text-left">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <TrendingUp size={20} />
+              </div>
+              <div>
+                <h3 className="font-display font-semibold text-lg">How wealth snapshots work</h3>
+                <p className="text-sm text-muted-foreground">Learn how to track your progress effectively</p>
+              </div>
+            </div>
+            <ChevronDown size={20} className="text-muted-foreground" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="px-6 pb-6 pt-2 space-y-4 animate-in slide-in-from-top-2 duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="space-y-2">
+              <h4 className="font-medium text-white flex items-center gap-2">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs">1</span>
+                Record Balances
+              </h4>
+              <p className="text-sm text-muted-foreground">Once a month, record the current balance of all your accounts (savings, investments, debts).</p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-medium text-white flex items-center gap-2">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs">2</span>
+                Automatic Calculation
+              </h4>
+              <p className="text-sm text-muted-foreground">The app sums your assets and subtracts liabilities to calculate your "Net Worth" for that month.</p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-medium text-white flex items-center gap-2">
+                <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/20 text-primary text-xs">3</span>
+                Track Growth
+              </h4>
+              <p className="text-sm text-muted-foreground">Visualize your progress over time on the chart to see if you're hitting your financial goals.</p>
+            </div>
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
       {/* Metrics Grid */}
       <div className="space-y-4">
         <Button 
           onClick={scrollToSnapshots}
-          className="w-full h-12 gap-2 text-lg font-semibold shadow-lg hover-elevate"
+          className="w-full h-14 gap-2 text-lg font-semibold shadow-xl hover-elevate bg-gradient-to-r from-white/5 via-white/10 to-transparent border border-white/10 hover:border-primary/40 text-white transition-all duration-300"
           data-testid="button-add-wealth-snapshot-top"
         >
-          <PlusCircle size={20} />
+          <PlusCircle size={22} className="text-primary" />
           Add a wealth snapshot
         </Button>
 
