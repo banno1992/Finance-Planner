@@ -5,11 +5,13 @@ import {
   insertCashflowSchema,
   insertStudentLoanSchema,
   insertMortgageSchema,
+  insertPensionSchema,
   categories,
   snapshots,
   cashflows,
   studentLoans,
-  mortgages
+  mortgages,
+  pensions
 } from "./schema";
 
 export const errorSchemas = {
@@ -153,6 +155,30 @@ export const api = {
     delete: {
       method: "DELETE" as const,
       path: "/api/mortgages/:id",
+      responses: { 204: z.void() },
+    },
+  },
+  pensions: {
+    list: {
+      method: "GET" as const,
+      path: "/api/pensions",
+      responses: { 200: z.array(z.custom<typeof pensions.$inferSelect>()) },
+    },
+    create: {
+      method: "POST" as const,
+      path: "/api/pensions",
+      input: insertPensionSchema,
+      responses: { 201: z.custom<typeof pensions.$inferSelect>() },
+    },
+    update: {
+      method: "PATCH" as const,
+      path: "/api/pensions/:id",
+      input: insertPensionSchema.partial(),
+      responses: { 200: z.custom<typeof pensions.$inferSelect>() },
+    },
+    delete: {
+      method: "DELETE" as const,
+      path: "/api/pensions/:id",
       responses: { 204: z.void() },
     },
   },

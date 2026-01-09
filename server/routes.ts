@@ -129,6 +129,26 @@ export async function registerRoutes(
     res.status(204).end();
   });
 
+  app.get(api.pensions.list.path, async (_req, res) => {
+    const list = await storage.getPensions();
+    res.json(list);
+  });
+
+  app.post(api.pensions.create.path, async (req, res) => {
+    const item = await storage.createPension(req.body);
+    res.status(201).json(item);
+  });
+
+  app.patch(api.pensions.update.path, async (req, res) => {
+    const item = await storage.updatePension(parseInt(req.params.id), req.body);
+    res.json(item);
+  });
+
+  app.delete(api.pensions.delete.path, async (req, res) => {
+    await storage.deletePension(parseInt(req.params.id));
+    res.status(204).end();
+  });
+
   app.post("/api/import", async (req, res) => {
     try {
       await storage.importData(req.body);

@@ -59,6 +59,23 @@ export const mortgages = pgTable("mortgages", {
   propertyValue: numeric("property_value").notNull(),
 });
 
+// Pensions
+export const pensions = pgTable("pensions", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  currentAge: integer("current_age").notNull(),
+  retirementAge: integer("retirement_age").notNull(),
+  currentPotValue: numeric("current_pot_value").notNull(),
+  userMonthlyContribution: numeric("user_monthly_contribution").notNull(),
+  employerMonthlyContribution: numeric("employer_monthly_contribution").notNull(),
+  expectedGrowthRate: numeric("expected_growth_rate").notNull(), // Default/medium scenario
+  lowGrowthRate: numeric("low_growth_rate").default("3"),
+  highGrowthRate: numeric("high_growth_rate").default("7"),
+  inflationRate: numeric("inflation_rate").default("2.5"),
+  includeStatePension: integer("include_state_pension").default(1), // 1 = true, 0 = false
+  includeInNetWorth: integer("include_in_net_worth").default(0), // 1 = true, 0 = false
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({ id: true });
 export const insertSnapshotSchema = createInsertSchema(snapshots).omit({ id: true });
 export const insertSnapshotDetailSchema = createInsertSchema(snapshotDetails).omit({ id: true });
@@ -66,6 +83,7 @@ export const insertCashflowSchema = createInsertSchema(cashflows).omit({ id: tru
 export const insertSettingSchema = createInsertSchema(settings).omit({ id: true });
 export const insertStudentLoanSchema = createInsertSchema(studentLoans).omit({ id: true });
 export const insertMortgageSchema = createInsertSchema(mortgages).omit({ id: true });
+export const insertPensionSchema = createInsertSchema(pensions).omit({ id: true });
 
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = typeof categories.$inferInsert;
@@ -81,3 +99,5 @@ export type StudentLoan = typeof studentLoans.$inferSelect;
 export type InsertStudentLoan = typeof studentLoans.$inferInsert;
 export type Mortgage = typeof mortgages.$inferSelect;
 export type InsertMortgage = typeof mortgages.$inferInsert;
+export type Pension = typeof pensions.$inferSelect;
+export type InsertPension = typeof pensions.$inferInsert;

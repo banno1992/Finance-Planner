@@ -11,6 +11,7 @@ import Settings from "@/pages/Settings";
 import Analytics from "@/pages/Analytics";
 import StudentLoans from "@/pages/StudentLoans";
 import Mortgage from "@/pages/Mortgage";
+import Pension from "@/pages/Pension";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
         <Route path="/" component={Dashboard} />
         <Route path="/cashflow" component={Cashflow} />
         <Route path="/analytics" component={Analytics} />
+        <Route path="/pension" component={Pension} />
         <Route path="/student-loans" component={StudentLoans} />
         <Route path="/mortgage" component={Mortgage} />
         <Route path="/settings" component={Settings} />

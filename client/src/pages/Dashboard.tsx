@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from "react";
-import { useSnapshots, useCashflows, useSettings, useStudentLoans, useMortgages } from "@/hooks/use-finance";
+import { useSnapshots, useCashflows, useSettings, useStudentLoans, useMortgages, usePensions } from "@/hooks/use-finance";
 import { MetricCard } from "@/components/MetricCard";
 import { ChartContainer } from "@/components/ChartContainer";
 import { SnapshotManager } from "@/components/SnapshotManager";
@@ -20,11 +20,13 @@ export default function Dashboard() {
   const { data: cashflows, isLoading: loadingCashflows } = useCashflows();
   const { data: studentLoans, isLoading: loadingStudentLoans } = useStudentLoans();
   const { data: mortgages, isLoading: loadingMortgages } = useMortgages();
+  const { data: pensions, isLoading: loadingPensions } = usePensions();
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
 
   const [includeStudentLoans, setIncludeStudentLoans] = useState(false);
   const [includeMortgage, setIncludeMortgage] = useState(false);
+  const [includePension, setIncludePension] = useState(false);
   const [truncateYAxis, setTruncateYAxis] = useState(true);
   const [isCashflowOpen, setIsCashflowOpen] = useState(false);
   
@@ -34,7 +36,7 @@ export default function Dashboard() {
     snapshotsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (loadingSnapshots || loadingCashflows || loadingStudentLoans || loadingMortgages) {
+  if (loadingSnapshots || loadingCashflows || loadingStudentLoans || loadingMortgages || loadingPensions) {
     return (
       <div className="flex items-center justify-center h-full min-h-[500px]">
         <Loader2 className="animate-spin text-primary w-12 h-12" />
@@ -49,11 +51,16 @@ export default function Dashboard() {
 
   const studentLoanDebt = studentLoans?.reduce((sum, loan) => sum + Number(loan.loanAmount), 0) || 0;
   const mortgageEquity = mortgages?.reduce((sum, mortgage) => sum + (Number(mortgage.propertyValue) - Number(mortgage.loanAmount)), 0) || 0;
+  
+  const pension = pensions?.[0];
+  const pensionValue = pension ? Number(pension.currentPotValue) : 0;
+  const pensionIncludedInNetWorth = pension?.includeInNetWorth === 1;
 
   const getAdjustedNetWorth = (baseValue: number) => {
     let adjusted = baseValue;
     if (includeStudentLoans) adjusted -= studentLoanDebt;
     if (includeMortgage) adjusted += mortgageEquity;
+    if (includePension || pensionIncludedInNetWorth) adjusted += pensionValue;
     return adjusted;
   };
 
@@ -196,6 +203,20 @@ export default function Dashboard() {
                 />
                 <Label htmlFor="mortgage" className="text-xs text-muted-foreground cursor-pointer">Include House Equity (+{formatCurrency(mortgageEquity, currency)})</Label>
               </div>
+              {pensionValue > 0 && !pensionIncludedInNetWorth && (
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="pension" 
+                    checked={includePension}
+                    onCheckedChange={(checked) => setIncludePension(!!checked)}
+                    data-testid="checkbox-include-pension-dashboard"
+                  />
+                  <Label htmlFor="pension" className="text-xs text-muted-foreground cursor-pointer">Include Pension (+{formatCurrency(pensionValue, currency)})</Label>
+                </div>
+              )}
+              {pensionIncludedInNetWorth && pensionValue > 0 && (
+                <div className="text-xs text-primary px-0.5">Pension included (+{formatCurrency(pensionValue, currency)})</div>
+              )}
             </div>
           </div>
           <MetricCard 

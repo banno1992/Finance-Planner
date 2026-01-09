@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api, buildUrl } from "@shared/routes";
-import { type Category, type Cashflow, type StudentLoan, type Mortgage } from "@shared/schema";
+import { type Category, type Cashflow, type StudentLoan, type Mortgage, type Pension } from "@shared/schema";
 import { z } from "zod";
 
 // ============================================
@@ -339,14 +339,76 @@ export function useDeleteMortgage() {
   });
 }
 
+// ============================================
+// PENSIONS
+// ============================================
+
+export function usePensions() {
+  return useQuery({
+    queryKey: [api.pensions.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.pensions.list.path);
+      if (!res.ok) throw new Error("Failed to fetch pensions");
+      return api.pensions.list.responses[200].parse(await res.json());
+    },
+  });
+}
+
+export function useCreatePension() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const validated = api.pensions.create.input.parse(data);
+      const res = await fetch(api.pensions.create.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validated),
+      });
+      if (!res.ok) throw new Error("Failed to create pension");
+      return api.pensions.create.responses[201].parse(await res.json());
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.pensions.list.path] }),
+  });
+}
+
+export function useUpdatePension() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const url = buildUrl(api.pensions.update.path, { id });
+      const res = await fetch(url, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to update pension");
+      return await res.json();
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.pensions.list.path] }),
+  });
+}
+
+export function useDeletePension() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.pensions.delete.path, { id });
+      const res = await fetch(url, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete pension");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.pensions.list.path] }),
+  });
+}
+
 export function useExportData() {
   return async () => {
-    const [categories, cashflows, snapshots, studentLoans, mortgages] = await Promise.all([
+    const [categories, cashflows, snapshots, studentLoans, mortgages, pensions] = await Promise.all([
       fetch(api.categories.list.path).then(r => r.json()),
       fetch(api.cashflows.list.path).then(r => r.json()),
       fetch(api.snapshots.list.path).then(r => r.json()),
       fetch(api.studentLoans.list.path).then(r => r.json()),
-      fetch(api.mortgages.list.path).then(r => r.json())
+      fetch(api.mortgages.list.path).then(r => r.json()),
+      fetch(api.pensions.list.path).then(r => r.json())
     ]);
 
     const data = {
@@ -356,7 +418,8 @@ export function useExportData() {
       cashflows,
       snapshots,
       studentLoans,
-      mortgages
+      mortgages,
+      pensions
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

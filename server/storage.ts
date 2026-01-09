@@ -1,9 +1,9 @@
 import { db } from "./db";
 import { 
-  categories, snapshots, snapshotDetails, cashflows, settings, studentLoans, mortgages,
-  type Category, type Snapshot, type Cashflow, type StudentLoan, type Mortgage,
+  categories, snapshots, snapshotDetails, cashflows, settings, studentLoans, mortgages, pensions,
+  type Category, type Snapshot, type Cashflow, type StudentLoan, type Mortgage, type Pension,
   type InsertCategory, type InsertSnapshot, type InsertCashflow,
-  type InsertSnapshotDetail, type InsertStudentLoan, type InsertMortgage
+  type InsertSnapshotDetail, type InsertStudentLoan, type InsertMortgage, type InsertPension
 } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 
@@ -41,6 +41,12 @@ export interface IStorage {
   createMortgage(mortgage: any): Promise<Mortgage>;
   updateMortgage(id: number, mortgage: any): Promise<Mortgage>;
   deleteMortgage(id: number): Promise<void>;
+
+  // Pensions
+  getPensions(): Promise<Pension[]>;
+  createPension(pension: any): Promise<Pension>;
+  updatePension(id: number, pension: any): Promise<Pension>;
+  deletePension(id: number): Promise<void>;
 
   // Bulk Data
   importData(data: any): Promise<void>;
@@ -192,6 +198,24 @@ export class DatabaseStorage implements IStorage {
     await db.delete(mortgages).where(eq(mortgages.id, id));
   }
 
+  async getPensions(): Promise<Pension[]> {
+    return await db.select().from(pensions);
+  }
+
+  async createPension(pension: any): Promise<Pension> {
+    const [inserted] = await db.insert(pensions).values(pension).returning();
+    return inserted;
+  }
+
+  async updatePension(id: number, updates: any): Promise<Pension> {
+    const [updated] = await db.update(pensions).set(updates).where(eq(pensions.id, id)).returning();
+    return updated;
+  }
+
+  async deletePension(id: number): Promise<void> {
+    await db.delete(pensions).where(eq(pensions.id, id));
+  }
+
   async importData(data: any): Promise<void> {
     await db.transaction(async (tx) => {
       // Clear existing data
@@ -201,6 +225,7 @@ export class DatabaseStorage implements IStorage {
       await tx.delete(cashflows);
       await tx.delete(studentLoans);
       await tx.delete(mortgages);
+      await tx.delete(pensions);
 
       // Re-import categories
       if (data.categories?.length) {
@@ -223,6 +248,7 @@ export class DatabaseStorage implements IStorage {
       if (data.cashflows?.length) await tx.insert(cashflows).values(data.cashflows as InsertCashflow[]);
       if (data.studentLoans?.length) await tx.insert(studentLoans).values(data.studentLoans as InsertStudentLoan[]);
       if (data.mortgages?.length) await tx.insert(mortgages).values(data.mortgages as InsertMortgage[]);
+      if (data.pensions?.length) await tx.insert(pensions).values(data.pensions as InsertPension[]);
     });
   }
 }
