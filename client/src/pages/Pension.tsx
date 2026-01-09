@@ -135,7 +135,8 @@ export default function Pension() {
     const drawdownRate = 0.04;
     
     const annualStatePension = UK_STATE_PENSION_WEEKLY_2024 * 52;
-    const includeState = p.includeStatePension;
+    const qualifiesForStatePension = p.retirementAge >= UK_STATE_PENSION_AGE;
+    const includeState = p.includeStatePension && qualifiesForStatePension;
 
     return {
       potLow: finalProjection.low,
@@ -445,8 +446,11 @@ export default function Pension() {
                   <div className="text-sm space-y-1">
                     <p className="text-muted-foreground">Growth Scenarios: {pension.lowGrowthRate || "3"}% / {pension.expectedGrowthRate}% / {pension.highGrowthRate || "7"}%</p>
                     <p className="text-muted-foreground">Inflation: {pension.inflationRate || "2.5"}%</p>
-                    {pension.includeStatePension === 1 && (
-                      <p className="text-green-400 text-xs">+ UK State Pension included</p>
+                    {pension.includeStatePension === 1 && pension.retirementAge >= UK_STATE_PENSION_AGE && (
+                      <p className="text-green-400 text-xs">+ UK State Pension included (from age {UK_STATE_PENSION_AGE})</p>
+                    )}
+                    {pension.includeStatePension === 1 && pension.retirementAge < UK_STATE_PENSION_AGE && (
+                      <p className="text-amber-400 text-xs">State Pension starts at age {UK_STATE_PENSION_AGE}</p>
                     )}
                     {pension.includeInNetWorth === 1 && (
                       <p className="text-primary text-xs">Included in Net Worth</p>
