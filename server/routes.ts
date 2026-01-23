@@ -49,18 +49,41 @@ export async function registerRoutes(
   app.post(api.snapshots.create.path, async (req, res) => {
     const { month, balances } = req.body;
     let total = 0;
-    Object.values(balances).forEach(val => total += parseFloat(val as string));
+    // Ensure we handle missing balances or non-numeric values gracefully
+    const processedBalances: Record<string, string> = {};
+    
+    // First, get all categories to ensure we have a complete set of balances
+    const allCategories = await storage.getCategories();
+    allCategories.forEach(cat => {
+      const val = balances[cat.id.toString()] || "0";
+      const numVal = parseFloat(val);
+      const safeVal = isNaN(numVal) ? "0" : numVal.toString();
+      processedBalances[cat.id.toString()] = safeVal;
+      total += parseFloat(safeVal);
+    });
     
     const snapshot = await storage.createSnapshot({ 
       month: month, 
       totalNetWorth: total.toString() 
-    }, balances);
+    }, processedBalances);
     res.status(201).json(snapshot);
   });
 
   app.patch(api.snapshots.update.path, async (req, res) => {
     const { balances } = req.body;
-    const snapshot = await storage.updateSnapshot(parseInt(req.params.id), balances);
+    let total = 0;
+    const processedBalances: Record<string, string> = {};
+    
+    const allCategories = await storage.getCategories();
+    allCategories.forEach(cat => {
+      const val = balances[cat.id.toString()] || "0";
+      const numVal = parseFloat(val);
+      const safeVal = isNaN(numVal) ? "0" : numVal.toString();
+      processedBalances[cat.id.toString()] = safeVal;
+      total += parseFloat(safeVal);
+    });
+
+    const snapshot = await storage.updateSnapshot(parseInt(req.params.id), processedBalances);
     res.json(snapshot);
   });
 

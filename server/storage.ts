@@ -103,19 +103,23 @@ export class DatabaseStorage implements IStorage {
     // Delete old details
     await db.delete(snapshotDetails).where(eq(snapshotDetails.snapshotId, id));
     
-    // Calculate new total
+    // Calculate new total (already calculated in routes but good to re-verify here)
     let total = 0;
-    Object.values(balances).forEach(val => total += parseFloat(val as string));
+    Object.values(balances).forEach(val => {
+      const num = parseFloat(val as string);
+      if (!isNaN(num)) total += num;
+    });
     
     // Update snapshot total
     await db.update(snapshots).set({ totalNetWorth: total.toString() }).where(eq(snapshots.id, id));
     
     // Insert new details
     for (const [catId, balance] of Object.entries(balances)) {
+      const numBalance = parseFloat(balance);
       await db.insert(snapshotDetails).values({
         snapshotId: id,
         categoryId: parseInt(catId),
-        balance: balance
+        balance: isNaN(numBalance) ? "0" : numBalance.toString()
       });
     }
     

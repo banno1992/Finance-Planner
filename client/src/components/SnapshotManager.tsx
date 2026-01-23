@@ -42,6 +42,7 @@ export function SnapshotManager() {
       onSuccess: () => {
         setEditingId(null);
         setEditValues({});
+        setExpandedId(null); // Close the accordion on success
       }
     });
   };
@@ -52,6 +53,23 @@ export function SnapshotManager() {
   };
 
   const handleAddNew = () => {
+    // Basic validation to prevent empty saves if that's happening
+    if (Object.keys(newBalances).length === 0) {
+      // If no balances provided, assume 0 for all categories to ensure consistency
+      const initialBalances: Record<string, string> = {};
+      categories?.forEach(cat => {
+        initialBalances[cat.id] = "0";
+      });
+      createSnapshot.mutate({ month: newMonth, balances: initialBalances }, {
+        onSuccess: () => {
+          setAddingNew(false);
+          setNewMonth(format(new Date(), "yyyy-MM-01"));
+          setNewBalances({});
+        }
+      });
+      return;
+    }
+
     createSnapshot.mutate({ month: newMonth, balances: newBalances }, {
       onSuccess: () => {
         setAddingNew(false);
