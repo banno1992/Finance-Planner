@@ -1,427 +1,274 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl } from "@shared/routes";
-import { type Category, type Cashflow, type StudentLoan, type Mortgage, type Pension } from "@shared/schema";
-import { z } from "zod";
+import { localDB, type Category, type Cashflow, type StudentLoan, type Mortgage, type Pension, type Snapshot } from "@/lib/localStorage";
 
-// ============================================
-// CATEGORIES
-// ============================================
+const QUERY_KEYS = {
+  categories: ['categories'],
+  snapshots: ['snapshots'],
+  cashflows: ['cashflows'],
+  studentLoans: ['studentLoans'],
+  mortgages: ['mortgages'],
+  pensions: ['pensions'],
+  settings: ['settings'],
+};
 
 export function useCategories() {
   return useQuery({
-    queryKey: [api.categories.list.path],
-    queryFn: async () => {
-      const res = await fetch(api.categories.list.path);
-      if (!res.ok) throw new Error("Failed to fetch categories");
-      return api.categories.list.responses[200].parse(await res.json());
-    },
+    queryKey: QUERY_KEYS.categories,
+    queryFn: () => localDB.getCategories(),
   });
 }
 
 export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Omit<Category, "id">) => {
-      const validated = api.categories.create.input.parse(data);
-      const res = await fetch(api.categories.create.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-      });
-      if (!res.ok) throw new Error("Failed to create category");
-      return api.categories.create.responses[201].parse(await res.json());
+    mutationFn: (data: Omit<Category, "id">) => {
+      return Promise.resolve(localDB.createCategory(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.categories.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories }),
   });
 }
 
 export function useReorderCategories() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (order: Array<{ id: number; displayOrder: number }>) => {
-      const res = await fetch(api.categories.reorder.path, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(order),
-      });
-      if (!res.ok) throw new Error("Failed to reorder categories");
-      return await res.json();
+    mutationFn: (order: Array<{ id: number; displayOrder: number }>) => {
+      return Promise.resolve(localDB.reorderCategories(order));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.categories.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories }),
   });
 }
 
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
-      const url = buildUrl(api.categories.delete.path, { id });
-      const res = await fetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete category");
+    mutationFn: (id: number) => {
+      localDB.deleteCategory(id);
+      return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.categories.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories }),
   });
 }
 
-// ============================================
-// CASHFLOWS (Income/Expenses)
-// ============================================
-
 export function useCashflows() {
   return useQuery({
-    queryKey: [api.cashflows.list.path],
-    queryFn: async () => {
-      const res = await fetch(api.cashflows.list.path);
-      if (!res.ok) throw new Error("Failed to fetch cashflows");
-      return api.cashflows.list.responses[200].parse(await res.json());
-    },
+    queryKey: QUERY_KEYS.cashflows,
+    queryFn: () => localDB.getCashflows(),
   });
 }
 
 export function useCreateCashflow() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: Omit<Cashflow, "id">) => {
-      const validated = api.cashflows.create.input.parse(data);
-      const res = await fetch(api.cashflows.create.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-      });
-      if (!res.ok) throw new Error("Failed to create cashflow");
-      return api.cashflows.create.responses[201].parse(await res.json());
+    mutationFn: (data: Omit<Cashflow, "id">) => {
+      return Promise.resolve(localDB.createCashflow(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.cashflows.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cashflows }),
   });
 }
 
 export function useUpdateCashflow() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Omit<Cashflow, "id">> }) => {
-      const url = buildUrl(api.cashflows.update.path, { id });
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Failed to update cashflow");
-      return await res.json();
+    mutationFn: ({ id, data }: { id: number; data: Partial<Omit<Cashflow, "id">> }) => {
+      const result = localDB.updateCashflow(id, data);
+      if (!result) throw new Error("Cashflow not found");
+      return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.cashflows.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cashflows }),
   });
 }
 
 export function useDeleteCashflow() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
-      const url = buildUrl(api.cashflows.delete.path, { id });
-      const res = await fetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete cashflow");
+    mutationFn: (id: number) => {
+      localDB.deleteCashflow(id);
+      return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.cashflows.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cashflows }),
   });
 }
 
-// ============================================
-// SNAPSHOTS (Net Worth History)
-// ============================================
-
 export function useSnapshots() {
   return useQuery({
-    queryKey: [api.snapshots.list.path],
-    queryFn: async () => {
-      const res = await fetch(api.snapshots.list.path);
-      if (!res.ok) throw new Error("Failed to fetch snapshots");
-      // The schema for snapshots list response is generic z.array(z.any()) in routes,
-      // but in practice it returns snapshots with nested details.
-      return await res.json();
-    },
+    queryKey: QUERY_KEYS.snapshots,
+    queryFn: () => localDB.getSnapshots(),
   });
 }
 
 export function useCreateSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { month: string; balances: Record<string, string> }) => {
-      const res = await fetch(api.snapshots.create.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Failed to create snapshot");
-      return await res.json();
+    mutationFn: (data: { month: string; balances: Record<string, string> }) => {
+      return Promise.resolve(localDB.createSnapshot(data.month, data.balances));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.snapshots.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots }),
   });
 }
 
 export function useUpdateSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, balances }: { id: number; balances: Record<string, string> }) => {
-      const url = buildUrl(api.snapshots.update.path, { id });
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ balances }),
-      });
-      if (!res.ok) throw new Error("Failed to update snapshot");
-      return await res.json();
+    mutationFn: ({ id, balances }: { id: number; balances: Record<string, string> }) => {
+      const result = localDB.updateSnapshot(id, balances);
+      if (!result) throw new Error("Snapshot not found");
+      return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.snapshots.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots }),
   });
 }
 
 export function useDeleteSnapshot() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
-      const url = buildUrl(api.snapshots.delete.path, { id });
-      const res = await fetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete snapshot");
+    mutationFn: (id: number) => {
+      localDB.deleteSnapshot(id);
+      return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.snapshots.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots }),
   });
 }
 
-// ============================================
-// SETTINGS (Currency, Import/Export)
-// ============================================
-
 export function useSettings() {
   return useQuery({
-    queryKey: [api.settings.get.path],
-    queryFn: async () => {
-      const res = await fetch(api.settings.get.path);
-      if (!res.ok) throw new Error("Failed to fetch settings");
-      return await res.json();
-    },
+    queryKey: QUERY_KEYS.settings,
+    queryFn: () => localDB.getSettings(),
   });
 }
 
 export function useUpdateSettings() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (currency: string) => {
-      const res = await fetch(api.settings.update.path, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currency }),
-      });
-      if (!res.ok) throw new Error("Failed to update settings");
-      return await res.json();
+    mutationFn: (currency: string) => {
+      return Promise.resolve(localDB.updateSettings(currency));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.settings.get.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.settings }),
   });
 }
 
-// ============================================
-// STUDENT LOANS
-// ============================================
-
 export function useStudentLoans() {
   return useQuery({
-    queryKey: [api.studentLoans.list.path],
-    queryFn: async () => {
-      const res = await fetch(api.studentLoans.list.path);
-      if (!res.ok) throw new Error("Failed to fetch student loans");
-      return api.studentLoans.list.responses[200].parse(await res.json());
-    },
+    queryKey: QUERY_KEYS.studentLoans,
+    queryFn: () => localDB.getStudentLoans(),
   });
 }
 
 export function useCreateStudentLoan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: any) => {
-      const validated = api.studentLoans.create.input.parse(data);
-      const res = await fetch(api.studentLoans.create.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-      });
-      if (!res.ok) throw new Error("Failed to create student loan");
-      return api.studentLoans.create.responses[201].parse(await res.json());
+    mutationFn: (data: Omit<StudentLoan, "id">) => {
+      return Promise.resolve(localDB.createStudentLoan(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.studentLoans.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans }),
   });
 }
 
 export function useUpdateStudentLoan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const url = buildUrl(api.studentLoans.update.path, { id });
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Failed to update student loan");
-      return await res.json();
+    mutationFn: ({ id, data }: { id: number; data: Partial<StudentLoan> }) => {
+      const result = localDB.updateStudentLoan(id, data);
+      if (!result) throw new Error("Student loan not found");
+      return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.studentLoans.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans }),
   });
 }
 
 export function useDeleteStudentLoan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
-      const url = buildUrl(api.studentLoans.delete.path, { id });
-      const res = await fetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete student loan");
+    mutationFn: (id: number) => {
+      localDB.deleteStudentLoan(id);
+      return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.studentLoans.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans }),
   });
 }
 
-// ============================================
-// MORTGAGES
-// ============================================
-
 export function useMortgages() {
   return useQuery({
-    queryKey: [api.mortgages.list.path],
-    queryFn: async () => {
-      const res = await fetch(api.mortgages.list.path);
-      if (!res.ok) throw new Error("Failed to fetch mortgages");
-      return api.mortgages.list.responses[200].parse(await res.json());
-    },
+    queryKey: QUERY_KEYS.mortgages,
+    queryFn: () => localDB.getMortgages(),
   });
 }
 
 export function useCreateMortgage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: any) => {
-      const validated = api.mortgages.create.input.parse(data);
-      const res = await fetch(api.mortgages.create.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-      });
-      if (!res.ok) throw new Error("Failed to create mortgage");
-      return api.mortgages.create.responses[201].parse(await res.json());
+    mutationFn: (data: Omit<Mortgage, "id">) => {
+      return Promise.resolve(localDB.createMortgage(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.mortgages.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages }),
   });
 }
 
 export function useUpdateMortgage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const url = buildUrl(api.mortgages.update.path, { id });
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Failed to update mortgage");
-      return await res.json();
+    mutationFn: ({ id, data }: { id: number; data: Partial<Mortgage> }) => {
+      const result = localDB.updateMortgage(id, data);
+      if (!result) throw new Error("Mortgage not found");
+      return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.mortgages.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages }),
   });
 }
 
 export function useDeleteMortgage() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
-      const url = buildUrl(api.mortgages.delete.path, { id });
-      const res = await fetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete mortgage");
+    mutationFn: (id: number) => {
+      localDB.deleteMortgage(id);
+      return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.mortgages.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages }),
   });
 }
 
-// ============================================
-// PENSIONS
-// ============================================
-
 export function usePensions() {
   return useQuery({
-    queryKey: [api.pensions.list.path],
-    queryFn: async () => {
-      const res = await fetch(api.pensions.list.path);
-      if (!res.ok) throw new Error("Failed to fetch pensions");
-      return api.pensions.list.responses[200].parse(await res.json());
-    },
+    queryKey: QUERY_KEYS.pensions,
+    queryFn: () => localDB.getPensions(),
   });
 }
 
 export function useCreatePension() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: any) => {
-      const validated = api.pensions.create.input.parse(data);
-      const res = await fetch(api.pensions.create.path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-      });
-      if (!res.ok) throw new Error("Failed to create pension");
-      return api.pensions.create.responses[201].parse(await res.json());
+    mutationFn: (data: Omit<Pension, "id">) => {
+      return Promise.resolve(localDB.createPension(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.pensions.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions }),
   });
 }
 
 export function useUpdatePension() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const url = buildUrl(api.pensions.update.path, { id });
-      const res = await fetch(url, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Failed to update pension");
-      return await res.json();
+    mutationFn: ({ id, data }: { id: number; data: Partial<Pension> }) => {
+      const result = localDB.updatePension(id, data);
+      if (!result) throw new Error("Pension not found");
+      return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.pensions.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions }),
   });
 }
 
 export function useDeletePension() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => {
-      const url = buildUrl(api.pensions.delete.path, { id });
-      const res = await fetch(url, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete pension");
+    mutationFn: (id: number) => {
+      localDB.deletePension(id);
+      return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [api.pensions.list.path] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions }),
   });
 }
 
 export function useExportData() {
-  return async () => {
-    const [categories, cashflows, snapshots, studentLoans, mortgages, pensions] = await Promise.all([
-      fetch(api.categories.list.path).then(r => r.json()),
-      fetch(api.cashflows.list.path).then(r => r.json()),
-      fetch(api.snapshots.list.path).then(r => r.json()),
-      fetch(api.studentLoans.list.path).then(r => r.json()),
-      fetch(api.mortgages.list.path).then(r => r.json()),
-      fetch(api.pensions.list.path).then(r => r.json())
-    ]);
-
-    const data = {
-      version: 1,
-      timestamp: new Date().toISOString(),
-      categories,
-      cashflows,
-      snapshots,
-      studentLoans,
-      mortgages,
-      pensions
-    };
-
+  return () => {
+    const data = localDB.exportData();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -437,17 +284,9 @@ export function useExportData() {
 export function useImportData() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: any) => {
-      const res = await fetch("/api/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to import data");
-      }
-      return await res.json();
+    mutationFn: (data: any) => {
+      localDB.importData(data);
+      return Promise.resolve({ message: "Data imported successfully" });
     },
     onSuccess: () => {
       queryClient.invalidateQueries();
