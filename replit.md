@@ -49,6 +49,8 @@ Data storage preference: Browser LocalStorage (private, no database costs)
 ### Data Flow Pattern
 All data operations go through `client/src/lib/localStorage.ts` which provides a simple API for CRUD operations. React Query hooks in `use-finance.ts` wrap these operations for cache management and reactivity.
 
+**Note on Cashflow page:** The Cashflow section uses direct useState + useEffect pattern instead of React Query for more reliable immediate UI updates. When adding/editing/deleting cashflows, a refreshCashflows callback re-reads from localStorage to ensure the UI reflects changes instantly.
+
 ## Features
 
 ### Dashboard
