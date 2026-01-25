@@ -1,18 +1,35 @@
-import { useCashflows, useDeleteCashflow, useUpdateCashflow, useSettings } from "@/hooks/use-finance";
+import { useSettings } from "@/hooks/use-finance";
 import { AddCashflowDialog } from "@/components/AddCashflowDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
-import { Trash2, ArrowUpRight, ArrowDownRight, Save, X } from "lucide-react";
+import { Trash2, ArrowUpRight, ArrowDownRight, Save, X, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { localDB, Cashflow as CashflowType } from "@/lib/localStorage";
 
 export default function Cashflow() {
-  const { data: cashflows, isLoading } = useCashflows();
+  const [cashflows, setCashflows] = useState<CashflowType[]>([]);
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
-  const deleteCashflow = useDeleteCashflow();
-  const updateCashflow = useUpdateCashflow();
+  
+  const refreshCashflows = useCallback(() => {
+    setCashflows(localDB.getCashflows());
+  }, []);
+  
+  useEffect(() => {
+    refreshCashflows();
+  }, [refreshCashflows]);
+  
+  const handleDelete = (id: number) => {
+    localDB.deleteCashflow(id);
+    refreshCashflows();
+  };
+  
+  const handleUpdate = (id: number, data: { name: string; amount: string }) => {
+    localDB.updateCashflow(id, data);
+    refreshCashflows();
+  };
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<{ name: string; amount: string }>({ name: "", amount: "" });
 
@@ -29,18 +46,9 @@ export default function Cashflow() {
 
   const handleSave = (id: number) => {
     if (editValues.name && editValues.amount) {
-      updateCashflow.mutate({ 
-        id, 
-        data: { 
-          name: editValues.name, 
-          amount: editValues.amount 
-        } 
-      }, {
-        onSuccess: () => {
-          setEditingId(null);
-          setEditValues({ name: "", amount: "" });
-        }
-      });
+      handleUpdate(id, { name: editValues.name, amount: editValues.amount });
+      setEditingId(null);
+      setEditValues({ name: "", amount: "" });
     }
   };
 
@@ -115,13 +123,23 @@ export default function Cashflow() {
                   </>
                 ) : (
                   <>
-                    <span className="font-medium flex-1 cursor-pointer hover:underline" onClick={() => handleEdit(item.id, item.name, item.amount.toString())}>{item.name}</span>
+                    <span className="font-medium flex-1">{item.name}</span>
                     <span className="font-mono text-green-400">+{formatCurrency(Number(item.amount), currency)}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => deleteCashflow.mutate(item.id)}
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => handleEdit(item.id, item.name, item.amount.toString())}
+                      data-testid={`button-edit-income-${item.id}`}
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-red-400"
+                      onClick={() => handleDelete(item.id)}
+                      data-testid={`button-delete-income-${item.id}`}
                     >
                       <Trash2 size={14} />
                     </Button>
@@ -137,7 +155,7 @@ export default function Cashflow() {
             )}
           </div>
           
-          <AddCashflowDialog />
+          <AddCashflowDialog defaultType="income" onCashflowAdded={refreshCashflows} />
         </div>
 
         {/* Expenses Column */}
@@ -198,13 +216,23 @@ export default function Cashflow() {
                   </>
                 ) : (
                   <>
-                    <span className="font-medium flex-1 cursor-pointer hover:underline" onClick={() => handleEdit(item.id, item.name, item.amount.toString())}>{item.name}</span>
+                    <span className="font-medium flex-1">{item.name}</span>
                     <span className="font-mono text-red-400">-{formatCurrency(Number(item.amount), currency)}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 text-muted-foreground hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => deleteCashflow.mutate(item.id)}
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => handleEdit(item.id, item.name, item.amount.toString())}
+                      data-testid={`button-edit-expense-${item.id}`}
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-red-400"
+                      onClick={() => handleDelete(item.id)}
+                      data-testid={`button-delete-expense-${item.id}`}
                     >
                       <Trash2 size={14} />
                     </Button>
@@ -220,7 +248,7 @@ export default function Cashflow() {
             )}
           </div>
           
-          <AddCashflowDialog />
+          <AddCashflowDialog defaultType="expense" onCashflowAdded={refreshCashflows} />
         </div>
       </div>
     </div>

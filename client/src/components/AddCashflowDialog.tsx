@@ -8,11 +8,16 @@ import { Plus, Wallet } from "lucide-react";
 import { useCreateCashflow, useSettings } from "@/hooks/use-finance";
 import { getCurrencySymbol } from "@/lib/currency";
 
-export function AddCashflowDialog() {
+interface AddCashflowDialogProps {
+  defaultType?: "income" | "expense";
+  onCashflowAdded?: () => void;
+}
+
+export function AddCashflowDialog({ defaultType = "expense", onCashflowAdded }: AddCashflowDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState<"income" | "expense">("expense");
+  const [type, setType] = useState<"income" | "expense">(defaultType);
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
   
@@ -31,7 +36,8 @@ export function AddCashflowDialog() {
         setOpen(false);
         setName("");
         setAmount("");
-        setType("expense");
+        setType(defaultType);
+        onCashflowAdded?.();
       }
     });
   };

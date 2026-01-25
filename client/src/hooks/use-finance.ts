@@ -24,7 +24,7 @@ export function useCreateCategory() {
     mutationFn: (data: Omit<Category, "id">) => {
       return Promise.resolve(localDB.createCategory(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories, refetchType: 'all' }),
   });
 }
 
@@ -34,7 +34,7 @@ export function useReorderCategories() {
     mutationFn: (order: Array<{ id: number; displayOrder: number }>) => {
       return Promise.resolve(localDB.reorderCategories(order));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories, refetchType: 'all' }),
   });
 }
 
@@ -45,14 +45,14 @@ export function useDeleteCategory() {
       localDB.deleteCategory(id);
       return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories, refetchType: 'all' }),
   });
 }
 
 export function useCashflows() {
   return useQuery({
     queryKey: QUERY_KEYS.cashflows,
-    queryFn: () => localDB.getCashflows(),
+    queryFn: () => Promise.resolve(localDB.getCashflows()),
   });
 }
 
@@ -62,7 +62,10 @@ export function useCreateCashflow() {
     mutationFn: (data: Omit<Cashflow, "id">) => {
       return Promise.resolve(localDB.createCashflow(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cashflows }),
+    onSuccess: () => {
+      queryClient.setQueryData(QUERY_KEYS.cashflows, localDB.getCashflows());
+      queryClient.refetchQueries({ queryKey: QUERY_KEYS.cashflows });
+    },
   });
 }
 
@@ -74,7 +77,9 @@ export function useUpdateCashflow() {
       if (!result) throw new Error("Cashflow not found");
       return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cashflows }),
+    onSuccess: () => {
+      queryClient.setQueryData(QUERY_KEYS.cashflows, localDB.getCashflows());
+    },
   });
 }
 
@@ -85,7 +90,9 @@ export function useDeleteCashflow() {
       localDB.deleteCashflow(id);
       return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cashflows }),
+    onSuccess: () => {
+      queryClient.setQueryData(QUERY_KEYS.cashflows, localDB.getCashflows());
+    },
   });
 }
 
@@ -102,7 +109,7 @@ export function useCreateSnapshot() {
     mutationFn: (data: { month: string; balances: Record<string, string> }) => {
       return Promise.resolve(localDB.createSnapshot(data.month, data.balances));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots, refetchType: 'all' }),
   });
 }
 
@@ -114,7 +121,7 @@ export function useUpdateSnapshot() {
       if (!result) throw new Error("Snapshot not found");
       return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots, refetchType: 'all' }),
   });
 }
 
@@ -125,7 +132,7 @@ export function useDeleteSnapshot() {
       localDB.deleteSnapshot(id);
       return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.snapshots, refetchType: 'all' }),
   });
 }
 
@@ -142,7 +149,7 @@ export function useUpdateSettings() {
     mutationFn: (currency: string) => {
       return Promise.resolve(localDB.updateSettings(currency));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.settings }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.settings, refetchType: 'all' }),
   });
 }
 
@@ -159,7 +166,7 @@ export function useCreateStudentLoan() {
     mutationFn: (data: Omit<StudentLoan, "id">) => {
       return Promise.resolve(localDB.createStudentLoan(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans, refetchType: 'all' }),
   });
 }
 
@@ -171,7 +178,7 @@ export function useUpdateStudentLoan() {
       if (!result) throw new Error("Student loan not found");
       return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans, refetchType: 'all' }),
   });
 }
 
@@ -182,7 +189,7 @@ export function useDeleteStudentLoan() {
       localDB.deleteStudentLoan(id);
       return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.studentLoans, refetchType: 'all' }),
   });
 }
 
@@ -199,7 +206,7 @@ export function useCreateMortgage() {
     mutationFn: (data: Omit<Mortgage, "id">) => {
       return Promise.resolve(localDB.createMortgage(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages, refetchType: 'all' }),
   });
 }
 
@@ -211,7 +218,7 @@ export function useUpdateMortgage() {
       if (!result) throw new Error("Mortgage not found");
       return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages, refetchType: 'all' }),
   });
 }
 
@@ -222,7 +229,7 @@ export function useDeleteMortgage() {
       localDB.deleteMortgage(id);
       return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.mortgages, refetchType: 'all' }),
   });
 }
 
@@ -239,7 +246,7 @@ export function useCreatePension() {
     mutationFn: (data: Omit<Pension, "id">) => {
       return Promise.resolve(localDB.createPension(data));
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions, refetchType: 'all' }),
   });
 }
 
@@ -251,7 +258,7 @@ export function useUpdatePension() {
       if (!result) throw new Error("Pension not found");
       return Promise.resolve(result);
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions, refetchType: 'all' }),
   });
 }
 
@@ -262,7 +269,7 @@ export function useDeletePension() {
       localDB.deletePension(id);
       return Promise.resolve();
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pensions, refetchType: 'all' }),
   });
 }
 
