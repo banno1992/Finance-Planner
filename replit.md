@@ -57,6 +57,7 @@ All data operations go through `client/src/lib/localStorage.ts` which provides a
 - Net worth tracking with month-over-month change
 - Optional inclusion of student loans, mortgage equity, and pension in net worth
 - Growth projections based on current savings rate
+- Category Trends chart: Line graph showing individual asset category values over time with toggleable visibility and y-axis truncation
 
 ### Pension Tracker
 - Three scenario modeling (low 3%, medium 5%, high 7% growth)
