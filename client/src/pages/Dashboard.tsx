@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef } from "react";
-import { useSnapshots, useCashflows, useSettings, useStudentLoans, useMortgages, usePensions } from "@/hooks/use-finance";
+import { useSnapshots, useCashflows, useSettings, useStudentLoans, useMortgages, usePensions, useCategories } from "@/hooks/use-finance";
 import { MetricCard } from "@/components/MetricCard";
 import { ChartContainer } from "@/components/ChartContainer";
 import { SnapshotManager } from "@/components/SnapshotManager";
+import { CategoryTrendChart } from "@/components/CategoryTrendChart";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
@@ -21,6 +22,7 @@ export default function Dashboard() {
   const { data: studentLoans, isLoading: loadingStudentLoans } = useStudentLoans();
   const { data: mortgages, isLoading: loadingMortgages } = useMortgages();
   const { data: pensions, isLoading: loadingPensions } = usePensions();
+  const { data: categories, isLoading: loadingCategories } = useCategories();
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
 
@@ -36,7 +38,7 @@ export default function Dashboard() {
     snapshotsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  if (loadingSnapshots || loadingCashflows || loadingStudentLoans || loadingMortgages || loadingPensions) {
+  if (loadingSnapshots || loadingCashflows || loadingStudentLoans || loadingMortgages || loadingPensions || loadingCategories) {
     return (
       <div className="flex items-center justify-center h-full min-h-[500px]">
         <Loader2 className="animate-spin text-primary w-12 h-12" />
@@ -384,6 +386,18 @@ export default function Dashboard() {
             />
           </ComposedChart>
         </ResponsiveContainer>
+      </ChartContainer>
+
+      {/* Category Trends Chart */}
+      <ChartContainer 
+        title="Category Trends" 
+        description="Compare how individual asset categories grow over time. Toggle categories on/off to compare."
+      >
+        <CategoryTrendChart 
+          snapshots={snapshots || []} 
+          categories={categories || []} 
+          currency={currency} 
+        />
       </ChartContainer>
 
       {/* Secondary Row */}
