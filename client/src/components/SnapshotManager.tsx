@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
-import { Trash2, Plus, Save, X, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
+import { Trash2, Plus, Save, X, ChevronDown, ChevronUp, Loader2, ArrowUpDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
 export function SnapshotManager() {
@@ -19,6 +19,7 @@ export function SnapshotManager() {
 
   const [editingId, setEditingId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [changeMode, setChangeMode] = useState<"amount" | "percent">("amount");
   const [editValues, setEditValues] = useState<Record<string, string>>({});
   const [addingNew, setAddingNew] = useState(false);
   const [newMonth, setNewMonth] = useState(format(new Date(), "yyyy-MM-01"));
@@ -240,16 +241,63 @@ export function SnapshotManager() {
                     ) : (
                       <div className="space-y-3">
                         <div className="space-y-2">
-                          {categories?.map((cat) => {
-                            const detail = snapshot.details.find((d: any) => d.categoryId === cat.id);
-                            const balance = detail ? Number(detail.balance) : 0;
+                          {(() => {
+                            const currentIdx = sortedSnapshots.findIndex(s => s.id === snapshot.id);
+                            const prevSnapshot = currentIdx < sortedSnapshots.length - 1 ? sortedSnapshots[currentIdx + 1] : null;
+                            const hasPrev = !!prevSnapshot;
                             return (
-                              <div key={cat.id} className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">{cat.name}</span>
-                                <span className="font-mono">{formatCurrency(balance, currency)}</span>
-                              </div>
+                              <>
+                                {hasPrev && (
+                                  <div className="flex justify-end mb-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-6 text-xs px-2 gap-1"
+                                      onClick={() => setChangeMode(prev => prev === "amount" ? "percent" : "amount")}
+                                      data-testid="button-toggle-change-mode"
+                                    >
+                                      <ArrowUpDown size={12} />
+                                      {changeMode === "amount" ? `${getCurrencySymbol(currency)} Change` : "% Change"}
+                                    </Button>
+                                  </div>
+                                )}
+                                {categories?.map((cat) => {
+                                  const detail = snapshot.details.find((d: any) => d.categoryId === cat.id);
+                                  const balance = detail ? Number(detail.balance) : 0;
+                                  let changeEl = null;
+                                  if (prevSnapshot) {
+                                    const prevDetail = prevSnapshot.details.find((d: any) => d.categoryId === cat.id);
+                                    const prevBalance = prevDetail ? Number(prevDetail.balance) : 0;
+                                    const diff = balance - prevBalance;
+                                    if (changeMode === "amount") {
+                                      changeEl = (
+                                        <span className={`text-xs font-mono whitespace-nowrap ${diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-muted-foreground'}`}>
+                                          {diff > 0 ? '+' : ''}{formatCurrency(diff, currency)}
+                                        </span>
+                                      );
+                                    } else {
+                                      const pctChange = prevBalance === 0 
+                                        ? (balance !== 0 ? (balance > 0 ? Infinity : -Infinity) : 0)
+                                        : ((diff / Math.abs(prevBalance)) * 100);
+                                      const pctStr = !isFinite(pctChange) ? 'New' : `${pctChange > 0 ? '+' : ''}${pctChange.toFixed(1)}%`;
+                                      changeEl = (
+                                        <span className={`text-xs font-mono whitespace-nowrap ${pctChange > 0 ? 'text-green-400' : pctChange < 0 ? 'text-red-400' : 'text-muted-foreground'}`}>
+                                          {pctStr}
+                                        </span>
+                                      );
+                                    }
+                                  }
+                                  return (
+                                    <div key={cat.id} className="flex items-center text-sm gap-2">
+                                      <span className="text-muted-foreground flex-1 min-w-0 truncate">{cat.name}</span>
+                                      <span className="font-mono shrink-0">{formatCurrency(balance, currency)}</span>
+                                      {changeEl && <span className="w-20 text-right shrink-0">{changeEl}</span>}
+                                    </div>
+                                  );
+                                })}
+                              </>
                             );
-                          })}
+                          })()}
                         </div>
                         <div className="flex gap-2 pt-4 border-t border-white/5 mt-4">
                           <Button
