@@ -9,7 +9,8 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/currency";
-import { Plus, Trash2, Edit2, Save, X, TrendingUp, PiggyBank, Target, Calculator, Loader2, Info, Landmark } from "lucide-react";
+import { Plus, Trash2, Edit2, Save, X, TrendingUp, PiggyBank, Target, Calculator, Loader2, Info, Landmark, Calendar } from "lucide-react";
+import { differenceInYears, parseISO } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart, ReferenceLine } from "recharts";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -29,6 +30,15 @@ interface PensionFormData {
   inflationRate: string;
   includeStatePension: boolean;
   includeInNetWorth: boolean;
+  dateOfBirth: string;
+}
+
+function calculateAgeFromDob(dob: string): number {
+  try {
+    return differenceInYears(new Date(), parseISO(dob));
+  } catch {
+    return 0;
+  }
 }
 
 const defaultFormData: PensionFormData = {
@@ -44,6 +54,7 @@ const defaultFormData: PensionFormData = {
   inflationRate: "2.5",
   includeStatePension: true,
   includeInNetWorth: false,
+  dateOfBirth: "",
 };
 
 export default function Pension() {
@@ -65,7 +76,7 @@ export default function Pension() {
 
   const projections = useMemo(() => {
     const p = editingId !== null || isAdding ? formData : pension ? {
-      currentAge: pension.currentAge,
+      currentAge: (pension as any).dateOfBirth ? calculateAgeFromDob((pension as any).dateOfBirth) : pension.currentAge,
       retirementAge: pension.retirementAge,
       currentPotValue: pension.currentPotValue,
       userMonthlyContribution: pension.userMonthlyContribution,
@@ -120,7 +131,7 @@ export default function Pension() {
   const retirementSummary = useMemo(() => {
     const p = editingId !== null || isAdding ? formData : pension ? {
       retirementAge: pension.retirementAge,
-      currentAge: pension.currentAge,
+      currentAge: (pension as any).dateOfBirth ? calculateAgeFromDob((pension as any).dateOfBirth) : pension.currentAge,
       inflationRate: pension.inflationRate || "2.5",
       includeStatePension: pension.includeStatePension === 1,
     } : null;
@@ -186,9 +197,12 @@ export default function Pension() {
         toast({ title: "Invalid pot value", description: "Please enter a number or expression like 1000+2000", variant: "destructive" });
         return;
       }
-      const data = {
+      const effectiveAge = formData.dateOfBirth 
+        ? calculateAgeFromDob(formData.dateOfBirth) 
+        : formData.currentAge;
+      const data: any = {
         name: formData.name,
-        currentAge: formData.currentAge,
+        currentAge: effectiveAge,
         retirementAge: formData.retirementAge,
         currentPotValue: resolvedPotValue,
         userMonthlyContribution: formData.userMonthlyContribution,
@@ -199,6 +213,7 @@ export default function Pension() {
         inflationRate: formData.inflationRate,
         includeStatePension: formData.includeStatePension ? 1 : 0,
         includeInNetWorth: formData.includeInNetWorth ? 1 : 0,
+        dateOfBirth: formData.dateOfBirth || undefined,
       };
 
       if (editingId !== null) {
@@ -217,9 +232,11 @@ export default function Pension() {
   };
 
   const handleEdit = (p: any) => {
+    const dob = p.dateOfBirth || "";
+    const age = dob ? calculateAgeFromDob(dob) : p.currentAge;
     setFormData({
       name: p.name,
-      currentAge: p.currentAge,
+      currentAge: age,
       retirementAge: p.retirementAge,
       currentPotValue: p.currentPotValue,
       userMonthlyContribution: p.userMonthlyContribution,
@@ -230,6 +247,7 @@ export default function Pension() {
       inflationRate: p.inflationRate || "2.5",
       includeStatePension: p.includeStatePension === 1,
       includeInNetWorth: p.includeInNetWorth === 1,
+      dateOfBirth: dob,
     });
     setEditingId(p.id);
   };
@@ -306,6 +324,20 @@ export default function Pension() {
                       data-testid="input-pension-name"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfBirth">Date of Birth (optional)</Label>
+                    <Input
+                      id="dateOfBirth"
+                      type="date"
+                      value={formData.dateOfBirth}
+                      onChange={(e) => {
+                        const dob = e.target.value;
+                        const age = dob ? calculateAgeFromDob(dob) : formData.currentAge;
+                        setFormData({ ...formData, dateOfBirth: dob, currentAge: age });
+                      }}
+                      data-testid="input-date-of-birth"
+                    />
+                  </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="currentAge">Current Age</Label>
@@ -313,9 +345,15 @@ export default function Pension() {
                         id="currentAge"
                         type="number"
                         value={formData.currentAge}
-                        onChange={(e) => setFormData({ ...formData, currentAge: parseInt(e.target.value) || 0 })}
+                        onChange={(e) => setFormData({ ...formData, currentAge: parseInt(e.target.value) || 0, dateOfBirth: "" })}
+                        disabled={!!formData.dateOfBirth}
                         data-testid="input-current-age"
                       />
+                      {formData.dateOfBirth && (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Calendar size={10} /> Calculated from DOB
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="retirementAge">Retirement Age</Label>
@@ -458,7 +496,12 @@ export default function Pension() {
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="p-3 bg-white/5 rounded-lg">
                       <p className="text-muted-foreground text-xs">Current Age</p>
-                      <p className="font-medium text-white">{pension.currentAge}</p>
+                      <p className="font-medium text-white">
+                        {(pension as any).dateOfBirth ? calculateAgeFromDob((pension as any).dateOfBirth) : pension.currentAge}
+                      </p>
+                      {(pension as any).dateOfBirth && (
+                        <p className="text-xs text-muted-foreground mt-0.5">DOB: {(pension as any).dateOfBirth}</p>
+                      )}
                     </div>
                     <div className="p-3 bg-white/5 rounded-lg">
                       <p className="text-muted-foreground text-xs">Retirement Age</p>
@@ -653,7 +696,8 @@ export default function Pension() {
                                 retirementSummary.potMedium - (projections.length > 0 ? 
                                   (() => {
                                     const p = pension || formData;
-                                    const years = (pension?.retirementAge || formData.retirementAge) - (pension?.currentAge || formData.currentAge);
+                                    const currentAge = pension && (pension as any).dateOfBirth ? calculateAgeFromDob((pension as any).dateOfBirth) : (pension?.currentAge || formData.currentAge);
+                                    const years = (pension?.retirementAge || formData.retirementAge) - currentAge;
                                     let value = parseFloat(pension?.currentPotValue || formData.currentPotValue);
                                     const rate = parseFloat(pension?.expectedGrowthRate || formData.expectedGrowthRate);
                                     const contrib = (parseFloat(pension?.userMonthlyContribution || formData.userMonthlyContribution) + 

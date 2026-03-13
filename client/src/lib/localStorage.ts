@@ -60,6 +60,7 @@ export interface Pension {
   inflationRate: string;
   includeStatePension: number;
   includeInNetWorth: number;
+  dateOfBirth?: string;
 }
 
 export interface Settings {
