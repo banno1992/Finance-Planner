@@ -71,6 +71,7 @@ export default function Pension() {
   const [formData, setFormData] = useState<PensionFormData>(defaultFormData);
   const [sensitivityContribution, setSensitivityContribution] = useState(0);
   const [showInflationAdjusted, setShowInflationAdjusted] = useState(true);
+  const [selectedScenario, setSelectedScenario] = useState<"low" | "medium" | "high">("medium");
 
   const pension = pensions?.[0];
 
@@ -170,6 +171,9 @@ export default function Pension() {
       totalMonthlyLow: includeState ? Math.round((finalProjection.low * drawdownRate + annualStatePension) / 12) : Math.round((finalProjection.low * drawdownRate) / 12),
       totalMonthlyMedium: includeState ? Math.round((finalProjection.medium * drawdownRate + annualStatePension) / 12) : Math.round((finalProjection.medium * drawdownRate) / 12),
       totalMonthlyHigh: includeState ? Math.round((finalProjection.high * drawdownRate + annualStatePension) / 12) : Math.round((finalProjection.high * drawdownRate) / 12),
+      totalMonthlyLowReal: includeState ? Math.round((finalProjection.lowReal * drawdownRate + annualStatePension / inflationFactor) / 12) : Math.round((finalProjection.lowReal * drawdownRate) / 12),
+      totalMonthlyMediumReal: includeState ? Math.round((finalProjection.mediumReal * drawdownRate + annualStatePension / inflationFactor) / 12) : Math.round((finalProjection.mediumReal * drawdownRate) / 12),
+      totalMonthlyHighReal: includeState ? Math.round((finalProjection.highReal * drawdownRate + annualStatePension / inflationFactor) / 12) : Math.round((finalProjection.highReal * drawdownRate) / 12),
     };
   }, [projections, pension, formData, isAdding, editingId]);
 
@@ -544,17 +548,15 @@ export default function Pension() {
                         <TrendingUp size={20} className="text-primary" />
                         Pension Growth Projection
                       </CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="inflationToggle"
-                          checked={showInflationAdjusted}
-                          onCheckedChange={(checked) => setShowInflationAdjusted(!!checked)}
-                          data-testid="checkbox-inflation-adjusted"
-                        />
-                        <Label htmlFor="inflationToggle" className="text-xs cursor-pointer">
-                          Show in today's money
-                        </Label>
-                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs px-2 gap-1"
+                        onClick={() => setShowInflationAdjusted(prev => !prev)}
+                        data-testid="button-chart-inflation-toggle"
+                      >
+                        {showInflationAdjusted ? "Real (today's £)" : "Nominal"}
+                      </Button>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -625,34 +627,78 @@ export default function Pension() {
                   </CardContent>
                 </Card>
 
-                {retirementSummary && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <Card className="glass-card border-red-500/20">
-                      <CardContent className="p-4 text-center">
-                        <p className="text-xs text-muted-foreground mb-1">Low Scenario at Retirement</p>
-                        <p className="text-xl font-bold text-red-400">{formatCurrency(showInflationAdjusted ? retirementSummary.potLowReal : retirementSummary.potLow, currency)}</p>
-                        <p className="text-xs text-muted-foreground mt-2">Monthly Income (4% rule)</p>
-                        <p className="text-lg font-semibold text-red-300">{formatCurrency(retirementSummary.totalMonthlyLow, currency)}/mo</p>
+                {retirementSummary && (() => {
+                  const scenarioConfig = {
+                    low: {
+                      label: "Low",
+                      color: "text-red-400",
+                      borderColor: "border-red-500/30",
+                      bgColor: "bg-red-500/10",
+                      pot: showInflationAdjusted ? retirementSummary.potLowReal : retirementSummary.potLow,
+                      monthly: showInflationAdjusted ? retirementSummary.totalMonthlyLowReal : retirementSummary.totalMonthlyLow,
+                      rate: pension?.lowGrowthRate || formData.lowGrowthRate || "3",
+                    },
+                    medium: {
+                      label: "Medium",
+                      color: "text-primary",
+                      borderColor: "border-primary/30",
+                      bgColor: "bg-primary/10",
+                      pot: showInflationAdjusted ? retirementSummary.potMediumReal : retirementSummary.potMedium,
+                      monthly: showInflationAdjusted ? retirementSummary.totalMonthlyMediumReal : retirementSummary.totalMonthlyMedium,
+                      rate: pension?.expectedGrowthRate || formData.expectedGrowthRate || "5",
+                    },
+                    high: {
+                      label: "High",
+                      color: "text-green-400",
+                      borderColor: "border-green-500/30",
+                      bgColor: "bg-green-500/10",
+                      pot: showInflationAdjusted ? retirementSummary.potHighReal : retirementSummary.potHigh,
+                      monthly: showInflationAdjusted ? retirementSummary.totalMonthlyHighReal : retirementSummary.totalMonthlyHigh,
+                      rate: pension?.highGrowthRate || formData.highGrowthRate || "7",
+                    },
+                  };
+                  const s = scenarioConfig[selectedScenario];
+                  return (
+                    <Card className={`glass-card ${s.borderColor}`}>
+                      <CardContent className="p-4 space-y-4">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <div className="flex gap-1">
+                            {(["low", "medium", "high"] as const).map((key) => (
+                              <Button
+                                key={key}
+                                variant={selectedScenario === key ? "default" : "outline"}
+                                size="sm"
+                                className="h-7 text-xs px-3"
+                                onClick={() => setSelectedScenario(key)}
+                                data-testid={`button-scenario-${key}`}
+                              >
+                                {scenarioConfig[key].label} ({scenarioConfig[key].rate}%)
+                              </Button>
+                            ))}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs px-2 gap-1"
+                            onClick={() => setShowInflationAdjusted(prev => !prev)}
+                            data-testid="button-toggle-nominal-real"
+                          >
+                            {showInflationAdjusted ? "Real (today's £)" : "Nominal"}
+                          </Button>
+                        </div>
+                        <div className="text-center py-2">
+                          <p className="text-xs text-muted-foreground mb-1">{s.label} Scenario — Pot at Retirement</p>
+                          <p className={`text-2xl font-bold ${s.color}`}>{formatCurrency(s.pot, currency)}</p>
+                          <p className="text-xs text-muted-foreground mt-3">Monthly Income (4% drawdown rule)</p>
+                          <p className={`text-xl font-semibold ${s.color}`}>{formatCurrency(s.monthly, currency)}/mo</p>
+                          {showInflationAdjusted && (
+                            <p className="text-xs text-muted-foreground mt-2">Values shown in today's purchasing power</p>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
-                    <Card className="glass-card border-primary/30">
-                      <CardContent className="p-4 text-center">
-                        <p className="text-xs text-muted-foreground mb-1">Medium Scenario at Retirement</p>
-                        <p className="text-xl font-bold text-primary">{formatCurrency(showInflationAdjusted ? retirementSummary.potMediumReal : retirementSummary.potMedium, currency)}</p>
-                        <p className="text-xs text-muted-foreground mt-2">Monthly Income (4% rule)</p>
-                        <p className="text-lg font-semibold text-primary">{formatCurrency(retirementSummary.totalMonthlyMedium, currency)}/mo</p>
-                      </CardContent>
-                    </Card>
-                    <Card className="glass-card border-green-500/20">
-                      <CardContent className="p-4 text-center">
-                        <p className="text-xs text-muted-foreground mb-1">High Scenario at Retirement</p>
-                        <p className="text-xl font-bold text-green-400">{formatCurrency(showInflationAdjusted ? retirementSummary.potHighReal : retirementSummary.potHigh, currency)}</p>
-                        <p className="text-xs text-muted-foreground mt-2">Monthly Income (4% rule)</p>
-                        <p className="text-lg font-semibold text-green-300">{formatCurrency(retirementSummary.totalMonthlyHigh, currency)}/mo</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
+                  );
+                })()}
 
                 <Collapsible>
                   <Card className="glass-card">
