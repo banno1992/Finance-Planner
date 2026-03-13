@@ -288,8 +288,9 @@ export default function Mortgage() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="font-semibold text-lg">{loan.name}</h3>
-                      <div className="flex gap-4 mt-1">
+                      <div className="flex gap-4 mt-1 flex-wrap">
                         <p className="text-sm text-muted-foreground">LTV: <span className="text-white font-medium">{ltv}%</span></p>
+                        <p className="text-sm text-muted-foreground">Remaining: <span className="text-orange-400 font-medium">{formatCurrency(loanAmount, currency)}</span></p>
                         <p className="text-sm text-muted-foreground">Equity: <span className="text-green-400 font-medium">{formatCurrency(propertyValue - loanAmount, currency)}</span></p>
                       </div>
                     </div>

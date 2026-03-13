@@ -162,13 +162,35 @@ export default function Pension() {
     };
   }, [projections, pension, formData, isAdding, editingId]);
 
+  const evaluateExpression = (val: string): string => {
+    const trimmed = val.trim();
+    if (/^-?\d+(\.\d+)?$/.test(trimmed)) return trimmed;
+    if (!/^\d+(\.\d+)?(\s*[+\-]\s*\d+(\.\d+)?)+$/.test(trimmed)) return val;
+    const tokens = trimmed.match(/[+\-]|\d+(\.\d+)?/g);
+    if (!tokens) return val;
+    let result = parseFloat(tokens[0]);
+    for (let i = 1; i < tokens.length; i += 2) {
+      const op = tokens[i];
+      const num = parseFloat(tokens[i + 1]);
+      if (isNaN(num)) return val;
+      if (op === '+') result += num;
+      else if (op === '-') result -= num;
+    }
+    return String(Math.round(result * 100) / 100);
+  };
+
   const handleSave = async () => {
     try {
+      const resolvedPotValue = evaluateExpression(formData.currentPotValue);
+      if (isNaN(parseFloat(resolvedPotValue))) {
+        toast({ title: "Invalid pot value", description: "Please enter a number or expression like 1000+2000", variant: "destructive" });
+        return;
+      }
       const data = {
         name: formData.name,
         currentAge: formData.currentAge,
         retirementAge: formData.retirementAge,
-        currentPotValue: formData.currentPotValue,
+        currentPotValue: resolvedPotValue,
         userMonthlyContribution: formData.userMonthlyContribution,
         employerMonthlyContribution: formData.employerMonthlyContribution,
         expectedGrowthRate: formData.expectedGrowthRate,
@@ -310,9 +332,17 @@ export default function Pension() {
                     <Label htmlFor="currentPot">Current Pot Value</Label>
                     <Input
                       id="currentPot"
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={formData.currentPotValue}
                       onChange={(e) => setFormData({ ...formData, currentPotValue: e.target.value })}
+                      onBlur={() => {
+                        const resolved = evaluateExpression(formData.currentPotValue);
+                        if (resolved !== formData.currentPotValue) {
+                          setFormData(prev => ({ ...prev, currentPotValue: resolved }));
+                        }
+                      }}
+                      placeholder="e.g. 1000+2000"
                       data-testid="input-current-pot"
                     />
                   </div>
