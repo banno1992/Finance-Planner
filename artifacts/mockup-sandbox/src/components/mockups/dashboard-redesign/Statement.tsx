@@ -11,7 +11,8 @@ import {
   snapshots, categories, categoryHistory
 } from "./_mockData";
 
-function Sparkline({ data, dataKey, color, trendUp }: { data: any[], dataKey: string, color: string, trendUp: boolean }) {
+type SparkPoint = Record<string, number | string>;
+function Sparkline({ data, dataKey, color, trendUp }: { data: SparkPoint[], dataKey: string, color: string, trendUp: boolean }) {
   return (
     <ResponsiveContainer width="100%" height={32}>
       <LineChart data={data}>
@@ -28,7 +29,7 @@ function Sparkline({ data, dataKey, color, trendUp }: { data: any[], dataKey: st
   );
 }
 
-function MetricCard({ title, value, trendPct, trendUp, sparklineData, sparklineKey }: { title: string, value: string, trendPct: string, trendUp: boolean, sparklineData: any[], sparklineKey: string }) {
+function MetricCard({ title, value, trendPct, trendUp, sparklineData, sparklineKey }: { title: string, value: string, trendPct: string, trendUp: boolean, sparklineData: SparkPoint[], sparklineKey: string }) {
   return (
     <div className="flex flex-col border-b border-border/50 pb-4 pt-2">
       <div className="text-xs text-muted-foreground mb-1">{title}</div>

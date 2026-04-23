@@ -60,3 +60,22 @@
   --color-asset: 190 100% 50%;
   --color-debt: 262 80% 50%;
 }
+
+/* Utility classes mirrored from the live app's index.css so extracted
+   components retain their original look. */
+.glass-card {
+  background-color: hsl(var(--card) / 0.60);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+.dark .glass-card {
+  border-color: rgb(255 255 255 / 0.05);
+}
+.text-gradient-primary {
+  background-image: linear-gradient(to right, hsl(var(--primary)), #60a5fa, hsl(var(--secondary)));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
