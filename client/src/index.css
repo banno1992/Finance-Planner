@@ -5,54 +5,91 @@
 @tailwind utilities;
 
 :root {
-  /* Premium Dark Theme Palette */
+  /* Fonts */
   --font-display: 'Space Grotesk', sans-serif;
   --font-body: 'Inter', sans-serif;
   --font-serif: 'Source Serif 4', Georgia, serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  /* Deep, rich background base */
+  /* === LIGHT THEME (default) === */
+  --background: 40 30% 97%;
+  --foreground: 222 35% 12%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 35% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 35% 12%;
+
+  --primary: 215 50% 35%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 215 25% 90%;
+  --secondary-foreground: 222 35% 12%;
+
+  --muted: 215 20% 92%;
+  --muted-foreground: 215 15% 40%;
+
+  --accent: 215 50% 35%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 70% 50%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 215 25% 88%;
+  --input: 215 25% 88%;
+  --ring: 215 50% 35%;
+
+  /* Calm chart palette - light mode (muted, banker-clean) */
+  --chart-accent: 215 35% 40%;
+  --chart-positive: 150 40% 35%;
+  --chart-negative: 0 55% 50%;
+
+  --color-income: 150 40% 35%;
+  --color-expense: 0 55% 50%;
+  --color-asset: 215 35% 40%;
+  --color-debt: 262 35% 45%;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  /* === DARK THEME === */
   --background: 224 71% 4%;
   --foreground: 210 40% 98%;
 
-  /* Card backgrounds - slightly lighter than base */
   --card: 222 47% 7%;
   --card-foreground: 210 40% 98%;
   --popover: 222 47% 7%;
   --popover-foreground: 210 40% 98%;
 
-  /* Primary - Neon Cyan/Blue */
   --primary: 190 100% 50%;
   --primary-foreground: 222 47% 11%;
 
-  /* Secondary - Deep Indigo/Purple */
   --secondary: 262 80% 50%;
   --secondary-foreground: 210 40% 98%;
 
-  /* Muted elements */
   --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
+  --muted-foreground: 215 20% 70%;
 
-  /* Accents */
   --accent: 190 100% 50%;
   --accent-foreground: 222 47% 11%;
 
-  /* States */
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
 
-  /* Borders & Inputs */
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
+  --border: 217 33% 22%;
+  --input: 217 33% 22%;
   --ring: 190 100% 50%;
 
-  /* Chart Colors */
-  --color-income: 142 71% 45%;   /* Green */
-  --color-expense: 0 84% 60%;    /* Red */
-  --color-asset: 190 100% 50%;   /* Cyan */
-  --color-debt: 262 80% 50%;     /* Purple */
+  /* Calm chart palette - dark mode (stronger so they're distinguishable) */
+  --chart-accent: 195 75% 65%;
+  --chart-positive: 150 60% 60%;
+  --chart-negative: 0 70% 65%;
 
-  --radius: 0.75rem;
+  --color-income: 142 71% 55%;
+  --color-expense: 0 84% 65%;
+  --color-asset: 190 100% 60%;
+  --color-debt: 262 80% 65%;
 }
 
 @layer base {
@@ -69,35 +106,30 @@
 
 @layer utilities {
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-gray-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-muted-foreground;
   }
   .text-gradient-primary {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-400 to-secondary;
-  }
-  
-  .glass-card {
-    @apply bg-card/60 backdrop-blur-xl border border-white/5 shadow-xl;
-  }
-  
-  .neo-shadow {
-    box-shadow: 0 0 20px -5px rgba(6, 182, 212, 0.15);
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary to-secondary;
   }
 
-  .scrollbar-hide::-webkit-scrollbar {
-      display: none;
+  .glass-card {
+    @apply bg-card/60 backdrop-blur-xl border border-border shadow-xl;
   }
-  .scrollbar-hide {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+
+  .neo-shadow {
+    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.15);
   }
+
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 }
 
-/* Recharts Customization */
+/* Recharts - adapts to theme via CSS vars */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: rgba(255, 255, 255, 0.05);
+  stroke: hsl(var(--border));
+  opacity: 0.5;
 }
-
 .recharts-tooltip-cursor {
-  fill: rgba(255, 255, 255, 0.05);
+  fill: hsl(var(--muted) / 0.4);
 }

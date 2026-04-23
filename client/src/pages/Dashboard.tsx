@@ -13,9 +13,36 @@ import {
   Loader2, ChevronDown, ChevronRight, Check, PlusCircle,
 } from "lucide-react";
 
-const ACCENT = "hsl(215 25% 55%)";
-const POSITIVE = "hsl(150 25% 55%)";
-const NEGATIVE = "hsl(0 25% 60%)";
+const ACCENT = "hsl(var(--chart-accent))";
+const POSITIVE = "hsl(var(--chart-positive))";
+const NEGATIVE = "hsl(var(--chart-negative))";
+
+function CalmToggle({
+  checked, onChange, label, testId,
+}: { checked: boolean; onChange: (v: boolean) => void; label: string; testId: string }) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="inline-flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors group"
+      data-testid={testId}
+    >
+      <span
+        className={
+          "inline-flex h-4 w-4 items-center justify-center rounded-[4px] border transition-colors " +
+          (checked
+            ? "border-foreground bg-foreground text-background"
+            : "border-muted-foreground/60 bg-transparent group-hover:border-foreground")
+        }
+      >
+        {checked && <Check size={11} strokeWidth={3} />}
+      </span>
+      <span>{label}</span>
+    </button>
+  );
+}
 
 export default function Dashboard() {
   const { data: snapshots, isLoading: loadingSnapshots } = useSnapshots();
@@ -161,43 +188,31 @@ export default function Dashboard() {
             {/* Subtle include toggles */}
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
               {studentLoanDebt > 0 && (
-                <label className="inline-flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={includeStudentLoans}
-                    onChange={(e) => setIncludeStudentLoans(e.target.checked)}
-                    className="h-3 w-3 accent-foreground/60"
-                    data-testid="checkbox-include-student-loans"
-                  />
-                  <span>Include student loans (−{formatCurrency(studentLoanDebt, currency)})</span>
-                </label>
+                <CalmToggle
+                  checked={includeStudentLoans}
+                  onChange={setIncludeStudentLoans}
+                  label={`Include student loans (−${formatCurrency(studentLoanDebt, currency)})`}
+                  testId="checkbox-include-student-loans"
+                />
               )}
               {mortgageEquity !== 0 && (
-                <label className="inline-flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={includeMortgage}
-                    onChange={(e) => setIncludeMortgage(e.target.checked)}
-                    className="h-3 w-3 accent-foreground/60"
-                    data-testid="checkbox-include-mortgage"
-                  />
-                  <span>Include house equity (+{formatCurrency(mortgageEquity, currency)})</span>
-                </label>
+                <CalmToggle
+                  checked={includeMortgage}
+                  onChange={setIncludeMortgage}
+                  label={`Include house equity (+${formatCurrency(mortgageEquity, currency)})`}
+                  testId="checkbox-include-mortgage"
+                />
               )}
               {pensionValue > 0 && !pensionIncludedInNetWorth && (
-                <label className="inline-flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={includePension}
-                    onChange={(e) => setIncludePension(e.target.checked)}
-                    className="h-3 w-3 accent-foreground/60"
-                    data-testid="checkbox-include-pension"
-                  />
-                  <span>Include pension (+{formatCurrency(pensionValue, currency)})</span>
-                </label>
+                <CalmToggle
+                  checked={includePension}
+                  onChange={setIncludePension}
+                  label={`Include pension (+${formatCurrency(pensionValue, currency)})`}
+                  testId="checkbox-include-pension"
+                />
               )}
               {pensionIncludedInNetWorth && pensionValue > 0 && (
-                <span className="text-foreground/70">Pension included (+{formatCurrency(pensionValue, currency)})</span>
+                <span className="text-foreground/80">Pension included (+{formatCurrency(pensionValue, currency)})</span>
               )}
             </div>
           </div>
@@ -353,23 +368,23 @@ export default function Dashboard() {
       </button>
 
       {/* This Month Strip */}
-      <section className="flex flex-col sm:flex-row justify-between gap-6 border-y border-border py-8">
-        <div className="flex-1">
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Income</p>
-          <p className="font-mono text-xl tabular-nums text-foreground" data-testid="text-monthly-income">
+      <section className="grid grid-cols-3 gap-3 sm:gap-6 border-y border-border py-8 text-center sm:text-left">
+        <div>
+          <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Income</p>
+          <p className="font-mono text-base sm:text-xl tabular-nums text-foreground break-words" data-testid="text-monthly-income">
             {formatCurrency(monthlyIncome, currency)}
           </p>
         </div>
-        <div className="flex-1">
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Expenses</p>
-          <p className="font-mono text-xl tabular-nums text-foreground" data-testid="text-monthly-expenses">
+        <div>
+          <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Expenses</p>
+          <p className="font-mono text-base sm:text-xl tabular-nums text-foreground break-words" data-testid="text-monthly-expenses">
             {formatCurrency(monthlyExpenses, currency)}
           </p>
         </div>
-        <div className="flex-1">
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Surplus</p>
+        <div>
+          <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Surplus</p>
           <p
-            className="font-mono text-xl tabular-nums"
+            className="font-mono text-base sm:text-xl tabular-nums break-words"
             style={{ color: monthlySurplus >= 0 ? POSITIVE : NEGATIVE }}
             data-testid="text-monthly-surplus"
           >

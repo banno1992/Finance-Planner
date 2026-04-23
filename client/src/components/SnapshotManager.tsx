@@ -148,17 +148,17 @@ export function SnapshotManager() {
       )}
 
       <ScrollArea className="flex-1">
-        <div className="space-y-3 pr-4">
+        <div className="space-y-3">
           {sortedSnapshots.length === 0 && !addingNew ? (
             <div className="text-center py-8 text-muted-foreground text-sm italic">
               No snapshots yet. Click "Add Snapshot" to get started.
             </div>
           ) : (
             sortedSnapshots.map((snapshot) => (
-              <div key={snapshot.id} className="rounded-lg bg-white/5 border border-white/5 overflow-hidden">
+              <div key={snapshot.id} className="rounded-lg bg-muted/40 border border-border overflow-hidden">
                 <button
                   onClick={() => setExpandedId(expandedId === snapshot.id ? null : snapshot.id)}
-                  className="w-full flex items-center justify-between p-4 hover:bg-white/10 transition-colors"
+                  className="w-full flex items-center justify-between p-4 hover:bg-muted/70 transition-colors"
                 >
                   <div className="flex items-center gap-4 flex-1">
                     <div>
@@ -193,7 +193,7 @@ export function SnapshotManager() {
                 </button>
 
                 {expandedId === snapshot.id && (
-                  <div className="border-t border-white/5 p-4 bg-black/20">
+                  <div className="border-t border-border p-4 bg-background/40">
                     {editingId === snapshot.id ? (
                       <div className="space-y-4">
                         <Label className="text-base font-semibold">Edit Balances</Label>
@@ -299,7 +299,7 @@ export function SnapshotManager() {
                             );
                           })()}
                         </div>
-                        <div className="flex gap-2 pt-4 border-t border-white/5 mt-4">
+                        <div className="flex gap-2 pt-4 border-t border-border mt-4">
                           <Button
                             variant="ghost"
                             size="sm"
