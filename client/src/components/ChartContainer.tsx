@@ -11,26 +11,36 @@ interface ChartContainerProps {
   headerActions?: React.ReactNode;
 }
 
-export function ChartContainer({ 
-  title, 
-  description, 
-  children, 
+export function ChartContainer({
+  title,
+  description,
+  children,
   className,
   action,
-  headerActions
+  headerActions,
 }: ChartContainerProps) {
   const finalAction = action || headerActions;
   return (
-    <div className={cn("glass-card rounded-2xl p-6 flex flex-col h-full", className)}>
+    <div
+      className={cn(
+        "rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 flex flex-col h-full shadow-sm",
+        className,
+      )}
+    >
       <div className="flex items-start justify-between mb-6">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-lg font-semibold text-foreground">{title}</h3>
+            <h3 className="font-serif text-lg font-light tracking-tight text-foreground">
+              {title}
+            </h3>
             {description && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <Info size={14} className="text-muted-foreground hover:text-primary transition-colors" />
+                    <Info
+                      size={14}
+                      className="text-muted-foreground hover:text-primary transition-colors"
+                    />
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="max-w-xs text-xs">{description}</p>
@@ -42,10 +52,8 @@ export function ChartContainer({
         </div>
         {finalAction && <div>{finalAction}</div>}
       </div>
-      
-      <div className="flex-1 w-full min-h-[250px] relative">
-        {children}
-      </div>
+
+      <div className="flex-1 w-full min-h-[250px] relative">{children}</div>
     </div>
   );
 }

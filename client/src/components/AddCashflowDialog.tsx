@@ -51,7 +51,7 @@ export function AddCashflowDialog({ defaultType = "expense", onCashflowAdded }: 
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] bg-card border-border">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">Add Cashflow Item</DialogTitle>
+          <DialogTitle className="font-serif text-xl font-light tracking-tight">Add Cashflow Item</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">

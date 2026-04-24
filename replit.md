@@ -15,9 +15,17 @@ Data storage preference: Browser LocalStorage (private, no database costs)
 - **Framework**: React with TypeScript
 - **Routing**: Wouter (lightweight router)
 - **State Management**: TanStack React Query for client-side state
-- **Styling**: Tailwind CSS with custom dark theme, shadcn/ui components
-- **Charts**: Recharts for data visualization (line charts, bar charts, pie charts)
+- **Styling**: Tailwind CSS with the CalmCards design system (Mercury-inspired banker-clean), light + dark themes, shadcn/ui components
+- **Charts**: Recharts for data visualization (line charts, bar charts, pie charts), tokenized via CSS vars
 - **Build Tool**: Vite with React plugin
+
+### Design System (CalmCards)
+- **Typography**: Source Serif 4 for headings (`font-serif font-light tracking-tight`), JetBrains Mono `tabular-nums` for numerical values, uppercase `tracking-[0.18em]` for small labels
+- **Surfaces**: `rounded-3xl border border-border bg-card/60 backdrop-blur-xl shadow-sm` for cards; `bg-muted/40 rounded-2xl border border-border/60` for stat tiles and rows
+- **Color tokens** (defined in `client/src/index.css`):
+  - `--chart-accent` (teal #119c74), `--chart-positive` (calm green), `--chart-negative` (calm red)
+  - `--chart-1` … `--chart-10` calm series palette for category trend lines, tuned per theme
+  - All charts use `hsl(var(--border))`, `hsl(var(--muted-foreground))`, `hsl(var(--card))`, `hsl(var(--foreground))` for grids/axes/tooltips so light + dark both look right
 
 ### Data Storage
 - **Storage Method**: Browser LocalStorage (`client/src/lib/localStorage.ts`)

@@ -286,8 +286,8 @@ export default function Pension() {
     <div className="space-y-6">
       <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-3xl font-display font-bold text-white">Pension Tracker</h2>
-          <p className="text-muted-foreground mt-1">Plan your retirement with scenario modeling and projections</p>
+          <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight text-foreground">Pension Tracker</h2>
+          <p className="text-muted-foreground mt-2">Plan your retirement with scenario modeling and projections</p>
         </div>
         {!showForm && !hasPension && (
           <Button onClick={() => setIsAdding(true)} data-testid="button-add-pension">
@@ -299,10 +299,10 @@ export default function Pension() {
 
       {(showForm || hasPension) && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="glass-card lg:col-span-1">
+          <Card className="lg:col-span-1 rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between gap-2 pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Landmark size={20} className="text-primary" />
+              <CardTitle className="flex items-center gap-2 font-serif text-lg font-light tracking-tight">
+                <Landmark size={18} className="text-primary" />
                 Pension Details
               </CardTitle>
               {hasPension && !showForm && (
@@ -493,41 +493,41 @@ export default function Pension() {
                 </>
               ) : pension ? (
                 <div className="space-y-4">
-                  <div className="text-center p-4 bg-primary/10 rounded-xl">
-                    <p className="text-sm text-muted-foreground">Current Pot Value</p>
-                    <p className="text-2xl font-bold text-primary">{formatCurrency(parseFloat(pension.currentPotValue), currency)}</p>
+                  <div className="text-center p-5 bg-primary/10 rounded-2xl border border-primary/20">
+                    <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Current Pot Value</p>
+                    <p className="font-serif text-3xl font-light text-primary tabular-nums mt-2">{formatCurrency(parseFloat(pension.currentPotValue), currency)}</p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-muted-foreground text-xs">Current Age</p>
-                      <p className="font-medium text-white">
+                    <div className="p-3 bg-muted/40 rounded-xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Current Age</p>
+                      <p className="font-serif text-lg font-light text-foreground tabular-nums mt-1">
                         {(pension as any).dateOfBirth ? calculateAgeFromDob((pension as any).dateOfBirth) : pension.currentAge}
                       </p>
                       {(pension as any).dateOfBirth && (
                         <p className="text-xs text-muted-foreground mt-0.5">DOB: {(pension as any).dateOfBirth}</p>
                       )}
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-muted-foreground text-xs">Retirement Age</p>
-                      <p className="font-medium text-white">{pension.retirementAge}</p>
+                    <div className="p-3 bg-muted/40 rounded-xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Retirement Age</p>
+                      <p className="font-serif text-lg font-light text-foreground tabular-nums mt-1">{pension.retirementAge}</p>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-muted-foreground text-xs">Your Monthly</p>
-                      <p className="font-medium text-white">{formatCurrency(parseFloat(pension.userMonthlyContribution), currency)}</p>
+                    <div className="p-3 bg-muted/40 rounded-xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Your Monthly</p>
+                      <p className="font-serif text-lg font-light text-foreground tabular-nums mt-1">{formatCurrency(parseFloat(pension.userMonthlyContribution), currency)}</p>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-muted-foreground text-xs">Employer Monthly</p>
-                      <p className="font-medium text-white">{formatCurrency(parseFloat(pension.employerMonthlyContribution), currency)}</p>
+                    <div className="p-3 bg-muted/40 rounded-xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Employer Monthly</p>
+                      <p className="font-serif text-lg font-light text-foreground tabular-nums mt-1">{formatCurrency(parseFloat(pension.employerMonthlyContribution), currency)}</p>
                     </div>
                   </div>
                   <div className="text-sm space-y-1">
-                    <p className="text-muted-foreground">Growth Scenarios: {pension.lowGrowthRate || "3"}% / {pension.expectedGrowthRate}% / {pension.highGrowthRate || "7"}%</p>
-                    <p className="text-muted-foreground">Inflation: {pension.inflationRate || "2.5"}%</p>
+                    <p className="text-muted-foreground">Growth Scenarios: <span className="tabular-nums">{pension.lowGrowthRate || "3"}% / {pension.expectedGrowthRate}% / {pension.highGrowthRate || "7"}%</span></p>
+                    <p className="text-muted-foreground">Inflation: <span className="tabular-nums">{pension.inflationRate || "2.5"}%</span></p>
                     {pension.includeStatePension === 1 && pension.retirementAge >= UK_STATE_PENSION_AGE && (
-                      <p className="text-green-400 text-xs">+ UK State Pension included (from age {UK_STATE_PENSION_AGE})</p>
+                      <p className="text-[hsl(var(--chart-positive))] text-xs">+ UK State Pension included (from age {UK_STATE_PENSION_AGE})</p>
                     )}
                     {pension.includeStatePension === 1 && pension.retirementAge < UK_STATE_PENSION_AGE && (
-                      <p className="text-amber-400 text-xs">State Pension starts at age {UK_STATE_PENSION_AGE}</p>
+                      <p className="text-amber-600 dark:text-amber-400 text-xs">State Pension starts at age {UK_STATE_PENSION_AGE}</p>
                     )}
                     {pension.includeInNetWorth === 1 && (
                       <p className="text-primary text-xs">Included in Net Worth</p>
@@ -541,11 +541,11 @@ export default function Pension() {
           <div className="lg:col-span-2 space-y-6">
             {projections.length > 0 && (
               <>
-                <Card className="glass-card">
+                <Card className="rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-center flex-wrap gap-2">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <TrendingUp size={20} className="text-primary" />
+                      <CardTitle className="flex items-center gap-2 font-serif text-lg font-light tracking-tight">
+                        <TrendingUp size={18} className="text-primary" />
                         Pension Growth Projection
                       </CardTitle>
                       <Button
@@ -565,36 +565,42 @@ export default function Pension() {
                         <AreaChart data={projections}>
                           <defs>
                             <linearGradient id="colorLow" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                              <stop offset="5%" stopColor="hsl(var(--chart-negative))" stopOpacity={0.25}/>
+                              <stop offset="95%" stopColor="hsl(var(--chart-negative))" stopOpacity={0}/>
                             </linearGradient>
                             <linearGradient id="colorMed" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
-                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                              <stop offset="5%" stopColor="hsl(var(--chart-accent))" stopOpacity={0.35}/>
+                              <stop offset="95%" stopColor="hsl(var(--chart-accent))" stopOpacity={0}/>
                             </linearGradient>
                             <linearGradient id="colorHigh" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                              <stop offset="5%" stopColor="hsl(var(--chart-positive))" stopOpacity={0.25}/>
+                              <stop offset="95%" stopColor="hsl(var(--chart-positive))" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
-                          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                           <XAxis 
                             dataKey="age" 
-                            stroke="rgba(255,255,255,0.5)"
-                            tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
+                            stroke="hsl(var(--muted-foreground))"
+                            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                            tickLine={false}
+                            axisLine={false}
                           />
                           <YAxis 
-                            stroke="rgba(255,255,255,0.5)"
-                            tick={{ fill: 'rgba(255,255,255,0.7)', fontSize: 12 }}
+                            stroke="hsl(var(--muted-foreground))"
+                            tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                             tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                            tickLine={false}
+                            axisLine={false}
                           />
                           <Tooltip 
                             contentStyle={{ 
                               backgroundColor: 'hsl(var(--card))', 
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              borderRadius: '8px',
-                              color: 'white'
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: '12px',
+                              color: 'hsl(var(--foreground))'
                             }}
+                            itemStyle={{ color: 'hsl(var(--foreground))' }}
+                            labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                             formatter={(value: number) => formatCurrency(value, currency)}
                             labelFormatter={(label) => `Age ${label}`}
                           />
@@ -602,14 +608,14 @@ export default function Pension() {
                           <Area 
                             type="monotone" 
                             dataKey={showInflationAdjusted ? "lowReal" : "low"} 
-                            stroke="#ef4444" 
+                            stroke="hsl(var(--chart-negative))" 
                             fill="url(#colorLow)"
                             name="Low (3%)"
                           />
                           <Area 
                             type="monotone" 
                             dataKey={showInflationAdjusted ? "mediumReal" : "medium"} 
-                            stroke="hsl(var(--primary))" 
+                            stroke="hsl(var(--chart-accent))" 
                             fill="url(#colorMed)"
                             name="Medium (5%)"
                             strokeWidth={2}
@@ -617,7 +623,7 @@ export default function Pension() {
                           <Area 
                             type="monotone" 
                             dataKey={showInflationAdjusted ? "highReal" : "high"} 
-                            stroke="#22c55e" 
+                            stroke="hsl(var(--chart-positive))" 
                             fill="url(#colorHigh)"
                             name="High (7%)"
                           />
@@ -631,9 +637,9 @@ export default function Pension() {
                   const scenarioConfig = {
                     low: {
                       label: "Low",
-                      color: "text-red-400",
-                      borderColor: "border-red-500/30",
-                      bgColor: "bg-red-500/10",
+                      color: "text-[hsl(var(--chart-negative))]",
+                      borderColor: "border-[hsl(var(--chart-negative))]/30",
+                      bgColor: "bg-[hsl(var(--chart-negative))]/10",
                       pot: showInflationAdjusted ? retirementSummary.potLowReal : retirementSummary.potLow,
                       monthly: showInflationAdjusted ? retirementSummary.totalMonthlyLowReal : retirementSummary.totalMonthlyLow,
                       rate: pension?.lowGrowthRate || formData.lowGrowthRate || "3",
@@ -649,9 +655,9 @@ export default function Pension() {
                     },
                     high: {
                       label: "High",
-                      color: "text-green-400",
-                      borderColor: "border-green-500/30",
-                      bgColor: "bg-green-500/10",
+                      color: "text-[hsl(var(--chart-positive))]",
+                      borderColor: "border-[hsl(var(--chart-positive))]/30",
+                      bgColor: "bg-[hsl(var(--chart-positive))]/10",
                       pot: showInflationAdjusted ? retirementSummary.potHighReal : retirementSummary.potHigh,
                       monthly: showInflationAdjusted ? retirementSummary.totalMonthlyHighReal : retirementSummary.totalMonthlyHigh,
                       rate: pension?.highGrowthRate || formData.highGrowthRate || "7",
@@ -659,8 +665,8 @@ export default function Pension() {
                   };
                   const s = scenarioConfig[selectedScenario];
                   return (
-                    <Card className={`glass-card ${s.borderColor}`}>
-                      <CardContent className="p-4 space-y-4">
+                    <Card className={`rounded-3xl bg-card/60 backdrop-blur-xl shadow-sm ${s.borderColor}`}>
+                      <CardContent className="p-5 space-y-4">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <div className="flex gap-1">
                             {(["low", "medium", "high"] as const).map((key) => (
@@ -687,12 +693,12 @@ export default function Pension() {
                           </Button>
                         </div>
                         <div className="text-center py-2">
-                          <p className="text-xs text-muted-foreground mb-1">{s.label} Scenario — Pot at Retirement</p>
-                          <p className={`text-2xl font-bold ${s.color}`}>{formatCurrency(s.pot, currency)}</p>
-                          <p className="text-xs text-muted-foreground mt-3">Monthly Income (4% drawdown rule)</p>
-                          <p className={`text-xl font-semibold ${s.color}`}>{formatCurrency(s.monthly, currency)}/mo</p>
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">{s.label} Scenario — Pot at Retirement</p>
+                          <p className={`font-serif text-3xl font-light tabular-nums ${s.color}`}>{formatCurrency(s.pot, currency)}</p>
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mt-4">Monthly Income (4% drawdown rule)</p>
+                          <p className={`font-serif text-xl font-light tabular-nums mt-1 ${s.color}`}>{formatCurrency(s.monthly, currency)}/mo</p>
                           {showInflationAdjusted && (
-                            <p className="text-xs text-muted-foreground mt-2">Values shown in today's purchasing power</p>
+                            <p className="text-xs text-muted-foreground mt-3">Values shown in today's purchasing power</p>
                           )}
                         </div>
                       </CardContent>
@@ -701,11 +707,11 @@ export default function Pension() {
                 })()}
 
                 <Collapsible>
-                  <Card className="glass-card">
+                  <Card className="rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
                     <CollapsibleTrigger asChild>
-                      <CardHeader className="cursor-pointer hover:bg-white/5 rounded-t-xl">
-                        <CardTitle className="flex items-center gap-2 text-lg">
-                          <Calculator size={20} className="text-primary" />
+                      <CardHeader className="cursor-pointer hover:bg-muted/40 rounded-t-3xl">
+                        <CardTitle className="flex items-center gap-2 font-serif text-lg font-light tracking-tight">
+                          <Calculator size={18} className="text-primary" />
                           Sensitivity Analysis
                           <Info size={14} className="text-muted-foreground ml-auto" />
                         </CardTitle>
@@ -717,7 +723,7 @@ export default function Pension() {
                         <div className="space-y-3">
                           <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Extra monthly contribution:</span>
-                            <span className="font-medium text-primary">+{formatCurrency(sensitivityContribution, currency)}</span>
+                            <span className="font-medium text-primary tabular-nums">+{formatCurrency(sensitivityContribution, currency)}</span>
                           </div>
                           <Slider
                             value={[sensitivityContribution]}
@@ -733,11 +739,11 @@ export default function Pension() {
                           </div>
                         </div>
                         {sensitivityContribution > 0 && retirementSummary && (
-                          <div className="p-4 bg-primary/10 rounded-xl mt-4">
+                          <div className="p-5 bg-primary/10 rounded-2xl border border-primary/20 mt-4">
                             <p className="text-sm text-muted-foreground mb-2">
                               Adding {formatCurrency(sensitivityContribution, currency)}/month could increase your retirement pot by:
                             </p>
-                            <p className="text-xl font-bold text-primary">
+                            <p className="font-serif text-2xl font-light text-primary tabular-nums">
                               +{formatCurrency(
                                 retirementSummary.potMedium - (projections.length > 0 ? 
                                   (() => {
@@ -764,22 +770,22 @@ export default function Pension() {
                 </Collapsible>
 
                 {retirementSummary && retirementSummary.statePensionAnnual > 0 && (
-                  <Card className="glass-card">
+                  <Card className="rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
                     <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-lg">
-                        <PiggyBank size={20} className="text-green-400" />
+                      <CardTitle className="flex items-center gap-2 font-serif text-lg font-light tracking-tight">
+                        <PiggyBank size={18} className="text-[hsl(var(--chart-positive))]" />
                         UK State Pension
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-green-500/10 rounded-xl text-center">
-                          <p className="text-xs text-muted-foreground">Weekly (2024/25 rate)</p>
-                          <p className="text-xl font-bold text-green-400">{formatCurrency(UK_STATE_PENSION_WEEKLY_2024, currency)}</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-4 bg-[hsl(var(--chart-positive))]/10 border border-[hsl(var(--chart-positive))]/20 rounded-2xl text-center">
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Weekly (2024/25 rate)</p>
+                          <p className="font-serif text-xl font-light text-[hsl(var(--chart-positive))] tabular-nums mt-1">{formatCurrency(UK_STATE_PENSION_WEEKLY_2024, currency)}</p>
                         </div>
-                        <div className="p-4 bg-green-500/10 rounded-xl text-center">
-                          <p className="text-xs text-muted-foreground">Annual</p>
-                          <p className="text-xl font-bold text-green-400">{formatCurrency(retirementSummary.statePensionAnnual, currency)}</p>
+                        <div className="p-4 bg-[hsl(var(--chart-positive))]/10 border border-[hsl(var(--chart-positive))]/20 rounded-2xl text-center">
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Annual</p>
+                          <p className="font-serif text-xl font-light text-[hsl(var(--chart-positive))] tabular-nums mt-1">{formatCurrency(retirementSummary.statePensionAnnual, currency)}</p>
                         </div>
                       </div>
                       <p className="text-xs text-muted-foreground mt-3">
@@ -796,10 +802,10 @@ export default function Pension() {
       )}
 
       {!showForm && !hasPension && (
-        <Card className="glass-card">
+        <Card className="rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
           <CardContent className="p-12 text-center">
             <Landmark size={48} className="mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No pension added yet</h3>
+            <h3 className="font-serif text-xl font-light tracking-tight text-foreground mb-2">No pension added yet</h3>
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               Add your pension details to see projections for retirement, including different growth scenarios and UK state pension integration.
             </p>

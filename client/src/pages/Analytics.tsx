@@ -6,7 +6,15 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGri
 import { format, parseISO } from "date-fns";
 import { Loader2 } from "lucide-react";
 
-const COLORS = ['hsl(var(--primary))', 'hsl(var(--success))', 'hsl(var(--destructive))', '#a78bfa', '#fb923c', '#06b6d4', '#ec4899'];
+const COLORS = [
+  'hsl(var(--chart-accent))',
+  'hsl(var(--color-asset))',
+  'hsl(var(--color-debt))',
+  'hsl(var(--color-income))',
+  'hsl(var(--color-expense))',
+  'hsl(var(--chart-positive))',
+  'hsl(var(--chart-negative))',
+];
 
 export default function Analytics() {
   const { data: snapshots, isLoading: snapshotsLoading } = useSnapshots();
@@ -104,40 +112,41 @@ export default function Analytics() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       <div>
-        <h2 className="text-3xl font-display font-bold text-white">Analytics</h2>
-        <p className="text-muted-foreground mt-1">Deep dive into your wealth accumulation</p>
+        <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight text-foreground">Analytics</h2>
+        <p className="text-muted-foreground mt-2">Deep dive into your wealth accumulation</p>
       </div>
 
       <ChartContainer 
         title="Monthly Net Worth Change" 
-        description="The absolute dollar change in your net worth month-over-month."
+        description="The absolute change in your net worth month-over-month."
       >
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={growthData}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
             <XAxis 
               dataKey="date" 
               tickFormatter={(val) => format(parseISO(val), 'MMM')}
-              stroke="rgba(255,255,255,0.3)"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis 
-              stroke="rgba(255,255,255,0.3)"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickFormatter={(val) => `${getCurrencySymbol(currency)}${(val/1000).toFixed(0)}k`}
               tickLine={false}
               axisLine={false}
             />
             <Tooltip 
-              cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-              contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
-              itemStyle={{ color: 'white' }}
+              cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
+              contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+              itemStyle={{ color: 'hsl(var(--foreground))' }}
+              labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
               formatter={(value: any) => [formatCurrency(Number(value), currency), 'Change']}
               labelFormatter={(label) => format(parseISO(label as string), 'MMMM yyyy')}
             />
-            <Bar dataKey="growth" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="growth" fill="hsl(var(--chart-accent))" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </ChartContainer>
@@ -191,19 +200,20 @@ export default function Analytics() {
                         endAngle={debtsEndAngle}
                       >
                         {filteredDebts.map((entry, index) => (
-                          <Cell key={`debt-${index}`} fill={`hsl(var(--destructive))`} opacity={0.4 + (index * 0.15)} />
+                          <Cell key={`debt-${index}`} fill={`hsl(var(--chart-negative))`} opacity={0.4 + (index * 0.15)} />
                         ))}
                       </Pie>
                       <Tooltip
                         formatter={(value: any) => [formatCurrency(Number(value), currency), 'Amount']}
-                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }}
-                        itemStyle={{ color: 'white' }}
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }}
+                        itemStyle={{ color: 'hsl(var(--foreground))' }}
+                        labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="mt-4 space-y-3">
                     <div>
-                      <p className="text-xs font-semibold text-green-400 mb-2">Assets (Inner Ring) - {((totalAssets / total) * 100).toFixed(0)}%</p>
+                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-[hsl(var(--chart-positive))] mb-2">Assets (Inner Ring) — {((totalAssets / total) * 100).toFixed(0)}%</p>
                       <div className="space-y-1">
                         {assets.map((item, idx) => (
                           <button
@@ -220,13 +230,13 @@ export default function Analytics() {
                               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length], opacity: visibleAssets.size === 0 || visibleAssets.has(item.name) ? 1 : 0.4 }}></div>
                               <span className={visibleAssets.size === 0 || visibleAssets.has(item.name) ? "text-muted-foreground" : "text-muted-foreground/50"}>{item.name}</span>
                             </div>
-                            <span className="font-mono">{formatCurrency(item.value, currency)}</span>
+                            <span className="font-mono tabular-nums">{formatCurrency(item.value, currency)}</span>
                           </button>
                         ))}
                       </div>
                     </div>
                     <div>
-                      <p className="text-xs font-semibold text-red-400 mb-2">Debts (Outer Ring) - {((totalDebts / total) * 100).toFixed(0)}%</p>
+                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-[hsl(var(--chart-negative))] mb-2">Debts (Outer Ring) — {((totalDebts / total) * 100).toFixed(0)}%</p>
                       <div className="space-y-1">
                         {debts.map((item, idx) => (
                           <button
@@ -240,10 +250,10 @@ export default function Analytics() {
                             className="w-full text-left flex items-center justify-between text-xs hover:opacity-80 transition-opacity"
                           >
                             <div className="flex items-center gap-2">
-                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'hsl(var(--destructive))', opacity: visibleDebts.size === 0 || visibleDebts.has(item.name) ? 1 : 0.4 }}></div>
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'hsl(var(--chart-negative))', opacity: visibleDebts.size === 0 || visibleDebts.has(item.name) ? 1 : 0.4 }}></div>
                               <span className={visibleDebts.size === 0 || visibleDebts.has(item.name) ? "text-muted-foreground" : "text-muted-foreground/50"}>{item.name}</span>
                             </div>
-                            <span className="font-mono">{formatCurrency(item.value, currency)}</span>
+                            <span className="font-mono tabular-nums">{formatCurrency(item.value, currency)}</span>
                           </button>
                         ))}
                       </div>
@@ -255,20 +265,20 @@ export default function Analytics() {
           </ChartContainer>
         )}
 
-        <div className="glass-card p-6 rounded-2xl">
-          <h3 className="font-display text-lg font-semibold mb-4">Advanced Insights</h3>
-          <div className="space-y-4 text-sm">
+        <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
+          <h3 className="font-serif text-lg font-light tracking-tight mb-6">Advanced Insights</h3>
+          <div className="space-y-5 text-sm">
             <div>
-              <p className="text-muted-foreground mb-1">3-Month Trailing Avg</p>
-              <p className="text-base font-semibold text-primary">{trailing3Mo !== null ? formatCurrency(trailing3Mo, currency) : "N/A"}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">3-Month Trailing Avg</p>
+              <p className="font-serif text-xl font-light text-foreground tabular-nums">{trailing3Mo !== null ? formatCurrency(trailing3Mo, currency) : "N/A"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground mb-1">6-Month Trailing Avg</p>
-              <p className="text-base font-semibold text-primary">{trailing6Mo !== null ? formatCurrency(trailing6Mo, currency) : "N/A"}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">6-Month Trailing Avg</p>
+              <p className="font-serif text-xl font-light text-foreground tabular-nums">{trailing6Mo !== null ? formatCurrency(trailing6Mo, currency) : "N/A"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground mb-1">12-Month Trailing Avg</p>
-              <p className="text-base font-semibold text-primary">{trailing12Mo !== null ? formatCurrency(trailing12Mo, currency) : "N/A"}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">12-Month Trailing Avg</p>
+              <p className="font-serif text-xl font-light text-foreground tabular-nums">{trailing12Mo !== null ? formatCurrency(trailing12Mo, currency) : "N/A"}</p>
             </div>
           </div>
         </div>
@@ -276,48 +286,48 @@ export default function Analytics() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {sortedSnapshots.length >= 3 ? (
-          <div className="glass-card p-6 rounded-2xl">
-            <h3 className="font-display text-lg font-semibold mb-4">Savings Analysis</h3>
-            <div className="space-y-4 text-sm">
+          <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
+            <h3 className="font-serif text-lg font-light tracking-tight mb-6">Savings Analysis</h3>
+            <div className="space-y-5 text-sm">
               <div>
-                <p className="text-muted-foreground mb-1">Projected Monthly Surplus</p>
-                <p className="text-base font-semibold text-green-400">{formatCurrency(projectedSurplus, currency)}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Projected Monthly Surplus</p>
+                <p className="font-serif text-xl font-light text-[hsl(var(--chart-positive))] tabular-nums">{formatCurrency(projectedSurplus, currency)}</p>
               </div>
               <div>
-                <p className="text-muted-foreground mb-1">Actual Monthly Surplus (Avg)</p>
-                <p className="text-base font-semibold text-blue-400">{actualSurplus}</p>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Actual Monthly Surplus (Avg)</p>
+                <p className="font-serif text-xl font-light text-foreground tabular-nums">{actualSurplus}</p>
               </div>
               <div>
-                <p className="text-muted-foreground mb-1">Surplus Gap</p>
-                <p className={`text-base font-semibold ${surplusGap === "N/A" || Number(surplusGap) >= 0 ? "text-primary" : "text-destructive"}`}>
+                <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Surplus Gap</p>
+                <p className={`font-serif text-xl font-light tabular-nums ${surplusGap === "N/A" || Number(surplusGap) >= 0 ? "text-foreground" : "text-[hsl(var(--chart-negative))]"}`}>
                   {surplusGap === "N/A" ? "N/A" : formatCurrency(Number(surplusGap), currency)}
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <div className="glass-card p-6 rounded-2xl">
-            <h3 className="font-display text-lg font-semibold mb-4">Savings Analysis</h3>
+          <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
+            <h3 className="font-serif text-lg font-light tracking-tight mb-4">Savings Analysis</h3>
             <p className="text-muted-foreground text-sm">
               Track at least 3 months of data to see savings analysis and insights.
             </p>
           </div>
         )}
         
-        <div className="glass-card p-6 rounded-2xl">
-          <h3 className="font-display text-lg font-semibold mb-4">Savings Rate Comparison</h3>
-          <div className="space-y-4 text-sm">
+        <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
+          <h3 className="font-serif text-lg font-light tracking-tight mb-6">Savings Rate Comparison</h3>
+          <div className="space-y-5 text-sm">
             <div>
-              <p className="text-muted-foreground mb-1">Projected Savings Rate</p>
-              <p className="text-base font-semibold text-green-400">{projectedSavingsRate}%</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Projected Savings Rate</p>
+              <p className="font-serif text-xl font-light text-[hsl(var(--chart-positive))] tabular-nums">{projectedSavingsRate}%</p>
             </div>
             <div>
-              <p className="text-muted-foreground mb-1">Actual Savings Rate (Avg)</p>
-              <p className="text-base font-semibold text-blue-400">{actualSavingsRate}</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Actual Savings Rate (Avg)</p>
+              <p className="font-serif text-xl font-light text-foreground tabular-nums">{actualSavingsRate}</p>
             </div>
             <div>
-              <p className="text-muted-foreground mb-1">Rate Gap</p>
-              <p className={`text-base font-semibold ${savingsRateGap === "N/A" || Number(savingsRateGap) >= 0 ? "text-primary" : "text-destructive"}`}>
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Rate Gap</p>
+              <p className={`font-serif text-xl font-light tabular-nums ${savingsRateGap === "N/A" || Number(savingsRateGap) >= 0 ? "text-foreground" : "text-[hsl(var(--chart-negative))]"}`}>
                 {savingsRateGap === "N/A" ? "N/A" : `${savingsRateGap}%`}
               </p>
             </div>

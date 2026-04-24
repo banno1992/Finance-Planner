@@ -43,7 +43,7 @@ export function AddSnapshotDialog() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] bg-card border-border max-h-[90vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl">New Net Worth Snapshot</DialogTitle>
+          <DialogTitle className="font-serif text-2xl font-light tracking-tight">New Net Worth Snapshot</DialogTitle>
           <DialogDescription>
             Enter your current balances for {format(new Date(month), 'MMMM yyyy')}
           </DialogDescription>

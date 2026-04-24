@@ -44,6 +44,18 @@
   --chart-positive: 162 70% 32%;
   --chart-negative: 0 55% 50%;
 
+  /* Calm series palette - light mode (muted, banker-friendly) */
+  --chart-1: 162 55% 38%;
+  --chart-2: 215 45% 45%;
+  --chart-3: 262 35% 50%;
+  --chart-4: 30 65% 48%;
+  --chart-5: 190 50% 40%;
+  --chart-6: 340 45% 50%;
+  --chart-7: 50 60% 42%;
+  --chart-8: 280 35% 50%;
+  --chart-9: 130 35% 40%;
+  --chart-10: 220 25% 40%;
+
   --color-income: 150 40% 35%;
   --color-expense: 0 55% 50%;
   --color-asset: 215 35% 40%;
@@ -85,6 +97,18 @@
   --chart-accent: 162 65% 55%;
   --chart-positive: 162 55% 60%;
   --chart-negative: 0 70% 65%;
+
+  /* Calm series palette - dark mode (lifted for dark backgrounds) */
+  --chart-1: 162 60% 60%;
+  --chart-2: 215 70% 70%;
+  --chart-3: 262 60% 72%;
+  --chart-4: 30 80% 65%;
+  --chart-5: 190 65% 60%;
+  --chart-6: 340 70% 70%;
+  --chart-7: 50 75% 62%;
+  --chart-8: 280 55% 72%;
+  --chart-9: 130 50% 60%;
+  --chart-10: 220 40% 70%;
 
   --color-income: 142 71% 55%;
   --color-expense: 0 84% 65%;

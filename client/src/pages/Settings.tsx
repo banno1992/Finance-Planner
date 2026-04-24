@@ -97,8 +97,8 @@ export default function Settings() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
       <div>
-        <h2 className="text-3xl font-display font-bold text-white">Settings</h2>
-        <p className="text-muted-foreground mt-1">Configure your categories and data</p>
+        <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight text-foreground">Settings</h2>
+        <p className="text-muted-foreground mt-2">Configure your categories and data</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -106,8 +106,8 @@ export default function Settings() {
         {/* Categories & Currency Section */}
         <div className="space-y-6">
           {/* Currency */}
-          <div className="glass-card p-6 rounded-2xl">
-            <h3 className="font-display text-xl font-semibold mb-4">Currency</h3>
+          <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
+            <h3 className="font-serif text-xl font-light tracking-tight mb-4">Currency</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Select your preferred currency for display.
             </p>
@@ -124,8 +124,8 @@ export default function Settings() {
           </div>
 
           {/* Categories Section */}
-          <div className="glass-card p-6 rounded-2xl">
-            <h3 className="font-display text-xl font-semibold mb-4">Asset Categories</h3>
+          <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
+            <h3 className="font-serif text-xl font-light tracking-tight mb-4">Asset Categories</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Define categories and drag to reorder them.
             </p>
@@ -135,7 +135,7 @@ export default function Settings() {
                 placeholder="New Category Name" 
                 value={newCatName}
                 onChange={(e) => setNewCatName(e.target.value)}
-                className="bg-background/50"
+                className="bg-background"
               />
               <Button type="submit" size="icon" disabled={createCategory.isPending}>
                 <Plus size={18} />
@@ -150,14 +150,14 @@ export default function Settings() {
                   onDragStart={() => handleDragStart(cat.id)}
                   onDragOver={handleDragOver}
                   onDrop={() => handleDrop(cat.id)}
-                  className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 cursor-move hover:bg-white/10 transition-colors"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border border-border/60 cursor-move hover:bg-muted/70 transition-colors"
                 >
                   <GripVertical size={16} className="text-muted-foreground flex-shrink-0" />
                   <span className="flex-1">{cat.name}</span>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="h-8 w-8 text-muted-foreground hover:text-red-400 hover:bg-red-500/10"
+                    className="h-8 w-8 text-muted-foreground hover:text-[hsl(var(--chart-negative))] hover:bg-[hsl(var(--chart-negative))]/10"
                     onClick={() => deleteCategory.mutate(cat.id)}
                   >
                     <Trash2 size={14} />
@@ -173,8 +173,8 @@ export default function Settings() {
 
         {/* Data Management Section */}
         <div className="space-y-6">
-          <div className="glass-card p-6 rounded-2xl">
-            <h3 className="font-display text-xl font-semibold mb-4">Data Management</h3>
+          <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
+            <h3 className="font-serif text-xl font-light tracking-tight mb-4">Data Management</h3>
             <p className="text-sm text-muted-foreground mb-6">
               Your data is stored locally. Export a backup or import data from a JSON file.
             </p>
@@ -208,13 +208,13 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="glass-card p-6 rounded-2xl">
-            <h3 className="font-display text-xl font-semibold mb-4">Application</h3>
+          <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
+            <h3 className="font-serif text-xl font-light tracking-tight mb-4">Application</h3>
             <div className="flex items-center justify-between text-sm py-2">
                <span className="text-muted-foreground">Version</span>
-               <span>v1.0.0</span>
+               <span className="tabular-nums">v1.0.0</span>
             </div>
-            <Separator className="my-2 bg-white/10" />
+            <Separator className="my-2 bg-border" />
             <div className="flex items-center justify-between text-sm py-2">
                <span className="text-muted-foreground">Storage</span>
                <span>Local Storage (Synced)</span>

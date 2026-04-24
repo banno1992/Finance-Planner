@@ -60,32 +60,32 @@ export default function Cashflow() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
-        <h2 className="text-3xl font-display font-bold text-white">Cashflow</h2>
-        <p className="text-muted-foreground mt-1">Manage your recurring income and expenses</p>
+        <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight text-foreground">Cashflow</h2>
+        <p className="text-muted-foreground mt-2">Manage your recurring income and expenses</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Income Column */}
-        <div className="glass-card rounded-2xl p-6 space-y-6">
+        <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl shadow-sm p-6 space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center text-green-400">
+              <div className="w-10 h-10 rounded-full bg-[hsl(var(--chart-positive))]/15 flex items-center justify-center text-[hsl(var(--chart-positive))]">
                 <ArrowUpRight size={20} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Income</h3>
+                <h3 className="font-serif text-lg font-light tracking-tight">Income</h3>
                 <p className="text-xs text-muted-foreground">Recurring monthly inflows</p>
               </div>
             </div>
             <div className="text-right">
-              <span className="block text-2xl font-bold text-green-400">{formatCurrency(totalIncome, currency)}</span>
+              <span className="block font-serif text-2xl font-light text-[hsl(var(--chart-positive))] tabular-nums">{formatCurrency(totalIncome, currency)}</span>
               <span className="text-xs text-muted-foreground">/ month</span>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {incomeItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group">
                 {editingId === item.id ? (
                   <>
                     <Input 
@@ -107,7 +107,7 @@ export default function Cashflow() {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 text-green-400"
+                      className="h-8 w-8 text-[hsl(var(--chart-positive))]"
                       onClick={() => handleSave(item.id)}
                     >
                       <Save size={14} />
@@ -124,7 +124,7 @@ export default function Cashflow() {
                 ) : (
                   <>
                     <span className="font-medium flex-1">{item.name}</span>
-                    <span className="font-mono text-green-400">+{formatCurrency(Number(item.amount), currency)}</span>
+                    <span className="font-mono tabular-nums text-[hsl(var(--chart-positive))]">+{formatCurrency(Number(item.amount), currency)}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -137,7 +137,7 @@ export default function Cashflow() {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 text-muted-foreground hover:text-red-400"
+                      className="h-8 w-8 text-muted-foreground hover:text-[hsl(var(--chart-negative))]"
                       onClick={() => handleDelete(item.id)}
                       data-testid={`button-delete-income-${item.id}`}
                     >
@@ -159,26 +159,26 @@ export default function Cashflow() {
         </div>
 
         {/* Expenses Column */}
-        <div className="glass-card rounded-2xl p-6 space-y-6">
+        <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl shadow-sm p-6 space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
+              <div className="w-10 h-10 rounded-full bg-[hsl(var(--chart-negative))]/15 flex items-center justify-center text-[hsl(var(--chart-negative))]">
                 <ArrowDownRight size={20} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">Expenses</h3>
+                <h3 className="font-serif text-lg font-light tracking-tight">Expenses</h3>
                 <p className="text-xs text-muted-foreground">Recurring monthly outflows</p>
               </div>
             </div>
             <div className="text-right">
-              <span className="block text-2xl font-bold text-red-400">{formatCurrency(totalExpense, currency)}</span>
+              <span className="block font-serif text-2xl font-light text-[hsl(var(--chart-negative))] tabular-nums">{formatCurrency(totalExpense, currency)}</span>
               <span className="text-xs text-muted-foreground">/ month</span>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {expenseItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group">
+              <div key={item.id} className="flex items-center gap-3 p-3 rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group">
                 {editingId === item.id ? (
                   <>
                     <Input 
@@ -200,7 +200,7 @@ export default function Cashflow() {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 text-green-400"
+                      className="h-8 w-8 text-[hsl(var(--chart-positive))]"
                       onClick={() => handleSave(item.id)}
                     >
                       <Save size={14} />
@@ -217,7 +217,7 @@ export default function Cashflow() {
                 ) : (
                   <>
                     <span className="font-medium flex-1">{item.name}</span>
-                    <span className="font-mono text-red-400">-{formatCurrency(Number(item.amount), currency)}</span>
+                    <span className="font-mono tabular-nums text-[hsl(var(--chart-negative))]">-{formatCurrency(Number(item.amount), currency)}</span>
                     <Button 
                       variant="ghost" 
                       size="icon" 
@@ -230,7 +230,7 @@ export default function Cashflow() {
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-8 w-8 text-muted-foreground hover:text-red-400"
+                      className="h-8 w-8 text-muted-foreground hover:text-[hsl(var(--chart-negative))]"
                       onClick={() => handleDelete(item.id)}
                       data-testid={`button-delete-expense-${item.id}`}
                     >

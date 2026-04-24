@@ -128,8 +128,8 @@ export default function Mortgage() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div>
-        <h2 className="text-3xl font-display font-bold text-white">Mortgage</h2>
-        <p className="text-muted-foreground mt-1">Track your property equity and repayment schedule</p>
+        <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight text-foreground">Mortgage</h2>
+        <p className="text-muted-foreground mt-2">Track your property equity and repayment schedule</p>
       </div>
 
       {addingNew && (
@@ -273,7 +273,7 @@ export default function Mortgage() {
                     />
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-green-400" onClick={() => handleSave(loan.id)}>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(var(--chart-positive))]" onClick={() => handleSave(loan.id)}>
                       <Save size={14} />
                     </Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingId(null)}>
@@ -284,14 +284,14 @@ export default function Mortgage() {
               </Card>
             ) : (
               <>
-                <Card className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                <Card className="p-6 rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
+                  <div className="flex items-start justify-between mb-6">
                     <div>
-                      <h3 className="font-semibold text-lg">{loan.name}</h3>
-                      <div className="flex gap-4 mt-1 flex-wrap">
-                        <p className="text-sm text-muted-foreground">LTV: <span className="text-white font-medium">{ltv}%</span></p>
-                        <p className="text-sm text-muted-foreground">Remaining: <span className="text-orange-400 font-medium">{formatCurrency(loanAmount, currency)}</span></p>
-                        <p className="text-sm text-muted-foreground">Equity: <span className="text-green-400 font-medium">{formatCurrency(propertyValue - loanAmount, currency)}</span></p>
+                      <h3 className="font-serif text-xl font-light tracking-tight">{loan.name}</h3>
+                      <div className="flex gap-4 mt-2 flex-wrap text-sm">
+                        <p className="text-muted-foreground">LTV: <span className="text-foreground font-medium tabular-nums">{ltv}%</span></p>
+                        <p className="text-muted-foreground">Remaining: <span className="text-foreground font-medium tabular-nums">{formatCurrency(loanAmount, currency)}</span></p>
+                        <p className="text-muted-foreground">Equity: <span className="text-[hsl(var(--chart-positive))] font-medium tabular-nums">{formatCurrency(propertyValue - loanAmount, currency)}</span></p>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -299,29 +299,29 @@ export default function Mortgage() {
                         setEditingId(loan.id);
                         setEditValues(loan);
                       }}>Edit</Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400" onClick={() => deleteMortgage.mutate(loan.id)}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(var(--chart-negative))]" onClick={() => deleteMortgage.mutate(loan.id)}>
                         <Trash2 size={14} />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Years to Payoff</p>
-                      <p className="font-semibold text-lg text-green-400">{(metrics.monthsOver / 12).toFixed(1)}</p>
-                      {Number(metrics.yearsSaved) > 0 && <p className="text-[10px] text-green-500">Saved {metrics.yearsSaved} years</p>}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Years to Payoff</p>
+                      <p className="font-serif text-2xl font-light text-foreground tabular-nums mt-1">{(metrics.monthsOver / 12).toFixed(1)}</p>
+                      {Number(metrics.yearsSaved) > 0 && <p className="text-[10px] text-[hsl(var(--chart-positive))] mt-0.5">Saved {metrics.yearsSaved} years</p>}
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Payoff Date</p>
-                      <p className="font-semibold text-sm">{format(metrics.payoffDate, 'MMM yyyy')}</p>
+                    <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Payoff Date</p>
+                      <p className="font-serif text-base font-light text-foreground mt-1">{format(metrics.payoffDate, 'MMM yyyy')}</p>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Interest Saved</p>
-                      <p className="font-semibold text-lg text-yellow-400">{formatCurrency(metrics.interestSaved, currency)}</p>
+                    <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Interest Saved</p>
+                      <p className="font-serif text-2xl font-light text-foreground tabular-nums mt-1">{formatCurrency(metrics.interestSaved, currency)}</p>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Monthly + Over</p>
-                      <p className="font-semibold text-sm">{formatCurrency(monthlyPayment + overpayment, currency)}</p>
+                    <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Monthly + Over</p>
+                      <p className="font-serif text-base font-light text-foreground tabular-nums mt-1">{formatCurrency(monthlyPayment + overpayment, currency)}</p>
                     </div>
                   </div>
                 </Card>
@@ -330,35 +330,35 @@ export default function Mortgage() {
                   <ChartContainer title="Mortgage Balance Projection" description="Remaining balance with overpayments">
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={metrics.chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={10} />
-                        <YAxis stroke="rgba(255,255,255,0.3)" fontSize={10} tickFormatter={(val) => `${getCurrencySymbol(currency)}${(val/1000).toFixed(0)}k`} />
-                        <Tooltip formatter={(value: any) => [formatCurrency(Number(value), currency), 'Balance']} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }} />
-                        <Line type="monotone" dataKey="remaining" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(val) => `${getCurrencySymbol(currency)}${(val/1000).toFixed(0)}k`} />
+                        <Tooltip formatter={(value: any) => [formatCurrency(Number(value), currency), 'Balance']} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }} itemStyle={{ color: 'hsl(var(--foreground))' }} labelStyle={{ color: 'hsl(var(--muted-foreground))' }} />
+                        <Line type="monotone" dataKey="remaining" stroke="hsl(var(--chart-accent))" strokeWidth={2} dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
                   </ChartContainer>
                 )}
 
-                <Card className="p-6">
-                  <h4 className="font-semibold mb-4">Amortization Table (Yearly)</h4>
+                <Card className="p-6 rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
+                  <h4 className="font-serif text-lg font-light tracking-tight mb-4">Amortization Table (Yearly)</h4>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
                       <thead>
-                        <tr className="border-b border-white/10 text-muted-foreground">
-                          <th className="text-left py-2">Year</th>
-                          <th className="text-right py-2">Principal Paid</th>
-                          <th className="text-right py-2">Interest Paid</th>
-                          <th className="text-right py-2">Year-End Balance</th>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-2 uppercase tracking-[0.18em] text-muted-foreground font-medium">Year</th>
+                          <th className="text-right py-2 uppercase tracking-[0.18em] text-muted-foreground font-medium">Principal Paid</th>
+                          <th className="text-right py-2 uppercase tracking-[0.18em] text-muted-foreground font-medium">Interest Paid</th>
+                          <th className="text-right py-2 uppercase tracking-[0.18em] text-muted-foreground font-medium">Year-End Balance</th>
                         </tr>
                       </thead>
                       <tbody>
                         {metrics.yearlyBreakdown.map((year: any) => (
-                          <tr key={year.year} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                            <td className="py-2 text-muted-foreground">{year.year}</td>
-                            <td className="text-right">{formatCurrency(year.principal, currency)}</td>
-                            <td className="text-right text-yellow-400/80">{formatCurrency(year.interest, currency)}</td>
-                            <td className="text-right font-medium">{formatCurrency(year.balance, currency)}</td>
+                          <tr key={year.year} className="border-b border-border/40 hover:bg-muted/40 transition-colors">
+                            <td className="py-2 text-muted-foreground tabular-nums">{year.year}</td>
+                            <td className="text-right tabular-nums">{formatCurrency(year.principal, currency)}</td>
+                            <td className="text-right text-muted-foreground tabular-nums">{formatCurrency(year.interest, currency)}</td>
+                            <td className="text-right font-medium tabular-nums">{formatCurrency(year.balance, currency)}</td>
                           </tr>
                         ))}
                       </tbody>

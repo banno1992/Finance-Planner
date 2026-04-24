@@ -93,8 +93,8 @@ export default function StudentLoans() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       <div>
-        <h2 className="text-3xl font-display font-bold text-white">Student Loans</h2>
-        <p className="text-muted-foreground mt-1">Analyze your student loan repayment schedule</p>
+        <h2 className="font-serif text-3xl md:text-4xl font-light tracking-tight text-foreground">Student Loans</h2>
+        <p className="text-muted-foreground mt-2">Analyze your student loan repayment schedule</p>
       </div>
 
       {addingNew && (
@@ -203,7 +203,7 @@ export default function StudentLoans() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-green-400" onClick={() => handleSave(loan.id)}>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(var(--chart-positive))]" onClick={() => handleSave(loan.id)}>
                       <Save size={14} />
                     </Button>
                     <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditingId(null)}>
@@ -214,11 +214,11 @@ export default function StudentLoans() {
               </Card>
             ) : (
               <>
-                <Card className="p-6">
-                  <div className="flex items-start justify-between mb-4">
+                <Card className="p-6 rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
+                  <div className="flex items-start justify-between mb-6">
                     <div>
-                      <h3 className="font-semibold text-lg">{loan.name}</h3>
-                      <p className="text-sm text-muted-foreground">Initial amount: {formatCurrency(loanAmount, currency)}</p>
+                      <h3 className="font-serif text-xl font-light tracking-tight">{loan.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">Initial amount: <span className="tabular-nums">{formatCurrency(loanAmount, currency)}</span></p>
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" variant="ghost" onClick={() => {
@@ -227,34 +227,34 @@ export default function StudentLoans() {
                       }}>
                         Edit
                       </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-400" onClick={() => deleteLoan.mutate(loan.id)}>
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-[hsl(var(--chart-negative))]" onClick={() => deleteLoan.mutate(loan.id)}>
                         <Trash2 size={14} />
                       </Button>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Months to Payoff</p>
-                      <p className="font-semibold text-lg text-green-400">{metrics.months}</p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
+                    <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Months to Payoff</p>
+                      <p className="font-serif text-2xl font-light text-foreground tabular-nums mt-1">{metrics.months}</p>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Payoff Date</p>
-                      <p className="font-semibold text-sm">{format(metrics.payoffDate, 'MMM yyyy')}</p>
+                    <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Payoff Date</p>
+                      <p className="font-serif text-base font-light text-foreground mt-1">{format(metrics.payoffDate, 'MMM yyyy')}</p>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Total Interest</p>
-                      <p className="font-semibold text-lg text-yellow-400">{formatCurrency(metrics.totalInterest, currency)}</p>
+                    <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Total Interest</p>
+                      <p className="font-serif text-2xl font-light text-foreground tabular-nums mt-1">{formatCurrency(metrics.totalInterest, currency)}</p>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg">
-                      <p className="text-xs text-muted-foreground">Monthly Payment</p>
-                      <p className="font-semibold text-sm">{formatCurrency(monthlyPayment, currency)}</p>
+                    <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                      <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Monthly Payment</p>
+                      <p className="font-serif text-base font-light text-foreground tabular-nums mt-1">{formatCurrency(monthlyPayment, currency)}</p>
                     </div>
                   </div>
 
                   {!metrics.isValid && (
-                    <div className="p-3 bg-red-400/10 border border-red-400/30 rounded-md mb-4">
-                      <p className="text-xs text-red-300">Warning: Monthly payment is too low to cover interest.</p>
+                    <div className="mt-4 p-3 bg-[hsl(var(--chart-negative))]/10 border border-[hsl(var(--chart-negative))]/30 rounded-xl">
+                      <p className="text-xs text-[hsl(var(--chart-negative))]">Warning: Monthly payment is too low to cover interest.</p>
                     </div>
                   )}
                 </Card>
@@ -263,36 +263,36 @@ export default function StudentLoans() {
                   <ChartContainer title="Loan Balance Over Time" description="Remaining loan balance projection">
                     <ResponsiveContainer width="100%" height={300}>
                       <LineChart data={metrics.chartData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
-                        <XAxis dataKey="month" stroke="rgba(255,255,255,0.3)" fontSize={12} />
-                        <YAxis stroke="rgba(255,255,255,0.3)" fontSize={12} tickFormatter={(val) => `${getCurrencySymbol(currency)}${(val/1000).toFixed(0)}k`} />
-                        <Tooltip formatter={(value: any) => [formatCurrency(Number(value), currency), 'Balance']} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px' }} />
-                        <Line type="monotone" dataKey="remaining" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                        <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(val) => `${getCurrencySymbol(currency)}${(val/1000).toFixed(0)}k`} />
+                        <Tooltip formatter={(value: any) => [formatCurrency(Number(value), currency), 'Balance']} contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '12px', color: 'hsl(var(--foreground))' }} itemStyle={{ color: 'hsl(var(--foreground))' }} labelStyle={{ color: 'hsl(var(--muted-foreground))' }} />
+                        <Line type="monotone" dataKey="remaining" stroke="hsl(var(--chart-accent))" strokeWidth={2} dot={false} />
                       </LineChart>
                     </ResponsiveContainer>
                   </ChartContainer>
                 )}
 
                 {metrics.yearlyBreakdown.length > 0 && (
-                  <Card className="p-6">
-                    <h4 className="font-semibold mb-4">Year-by-Year Breakdown</h4>
+                  <Card className="p-6 rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
+                    <h4 className="font-serif text-lg font-light tracking-tight mb-4">Year-by-Year Breakdown</h4>
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
-                          <tr className="border-b border-white/10">
-                            <th className="text-left py-2 text-muted-foreground">Year</th>
-                            <th className="text-right py-2 text-muted-foreground">Principal</th>
-                            <th className="text-right py-2 text-muted-foreground">Interest</th>
-                            <th className="text-right py-2 text-muted-foreground">Remaining Balance</th>
+                          <tr className="border-b border-border">
+                            <th className="text-left py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground font-medium">Year</th>
+                            <th className="text-right py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground font-medium">Principal</th>
+                            <th className="text-right py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground font-medium">Interest</th>
+                            <th className="text-right py-2 text-xs uppercase tracking-[0.18em] text-muted-foreground font-medium">Remaining Balance</th>
                           </tr>
                         </thead>
                         <tbody>
                           {metrics.yearlyBreakdown.map((year: any) => (
-                            <tr key={year.year} className="border-b border-white/5 hover:bg-white/5">
-                              <td className="py-2">{year.year}</td>
-                              <td className="text-right">{formatCurrency(year.principal, currency)}</td>
-                              <td className="text-right text-yellow-400">{formatCurrency(year.interest, currency)}</td>
-                              <td className="text-right font-semibold">{formatCurrency(year.balance, currency)}</td>
+                            <tr key={year.year} className="border-b border-border/40 hover:bg-muted/40 transition-colors">
+                              <td className="py-2 tabular-nums">{year.year}</td>
+                              <td className="text-right tabular-nums">{formatCurrency(year.principal, currency)}</td>
+                              <td className="text-right text-muted-foreground tabular-nums">{formatCurrency(year.interest, currency)}</td>
+                              <td className="text-right font-medium tabular-nums">{formatCurrency(year.balance, currency)}</td>
                             </tr>
                           ))}
                         </tbody>

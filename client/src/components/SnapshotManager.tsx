@@ -173,7 +173,7 @@ export function SnapshotManager() {
                               if (!nextSnapshot) return null;
                               const diff = Number(snapshot.totalNetWorth) - Number(nextSnapshot.totalNetWorth);
                               return (
-                                <span className={`text-xs font-semibold ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                <span className={`text-xs font-semibold ${diff >= 0 ? 'text-[hsl(var(--chart-positive))]' : 'text-[hsl(var(--chart-negative))]'}`}>
                                   {diff >= 0 ? '+' : ''}{formatCurrency(diff, currency)}
                                 </span>
                               );
@@ -223,7 +223,7 @@ export function SnapshotManager() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-green-400"
+                            className="h-8 w-8 text-[hsl(var(--chart-positive))]"
                             onClick={() => handleSave(snapshot.id)}
                           >
                             <Save size={14} />
@@ -271,7 +271,7 @@ export function SnapshotManager() {
                                     const diff = balance - prevBalance;
                                     if (changeMode === "amount") {
                                       changeEl = (
-                                        <span className={`text-xs font-mono whitespace-nowrap ${diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-muted-foreground'}`}>
+                                        <span className={`text-xs font-mono whitespace-nowrap ${diff > 0 ? 'text-[hsl(var(--chart-positive))]' : diff < 0 ? 'text-[hsl(var(--chart-negative))]' : 'text-muted-foreground'}`}>
                                           {diff > 0 ? '+' : ''}{formatCurrency(diff, currency)}
                                         </span>
                                       );
@@ -281,7 +281,7 @@ export function SnapshotManager() {
                                         : ((diff / Math.abs(prevBalance)) * 100);
                                       const pctStr = !isFinite(pctChange) ? 'New' : `${pctChange > 0 ? '+' : ''}${pctChange.toFixed(1)}%`;
                                       changeEl = (
-                                        <span className={`text-xs font-mono whitespace-nowrap ${pctChange > 0 ? 'text-green-400' : pctChange < 0 ? 'text-red-400' : 'text-muted-foreground'}`}>
+                                        <span className={`text-xs font-mono whitespace-nowrap ${pctChange > 0 ? 'text-[hsl(var(--chart-positive))]' : pctChange < 0 ? 'text-[hsl(var(--chart-negative))]' : 'text-muted-foreground'}`}>
                                           {pctStr}
                                         </span>
                                       );
@@ -311,7 +311,7 @@ export function SnapshotManager() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-red-400 hover:text-red-300"
+                            className="h-8 w-8 text-[hsl(var(--chart-negative))] hover:text-[hsl(var(--chart-negative))]"
                             onClick={() => deleteSnapshot.mutate(snapshot.id)}
                           >
                             <Trash2 size={14} />

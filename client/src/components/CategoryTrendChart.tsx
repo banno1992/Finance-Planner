@@ -16,16 +16,16 @@ interface CategoryTrendChartProps {
 }
 
 const CHART_COLORS = [
-  "hsl(217, 91%, 60%)",
-  "hsl(142, 71%, 45%)",
-  "hsl(280, 87%, 65%)",
-  "hsl(36, 100%, 50%)",
-  "hsl(0, 84%, 60%)",
-  "hsl(180, 70%, 45%)",
-  "hsl(330, 80%, 60%)",
-  "hsl(60, 70%, 50%)",
-  "hsl(200, 80%, 50%)",
-  "hsl(120, 60%, 40%)",
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+  "hsl(var(--chart-6))",
+  "hsl(var(--chart-7))",
+  "hsl(var(--chart-8))",
+  "hsl(var(--chart-9))",
+  "hsl(var(--chart-10))",
 ];
 
 export function CategoryTrendChart({ snapshots, categories, currency }: CategoryTrendChartProps) {
@@ -108,7 +108,7 @@ export function CategoryTrendChart({ snapshots, categories, currency }: Category
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center space-x-2 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10">
+        <div className="flex items-center space-x-2 bg-muted/40 px-3 py-1.5 rounded-lg border border-border/60">
           <Checkbox 
             id="truncate-category-y" 
             checked={truncateYAxis}
@@ -142,17 +142,17 @@ export function CategoryTrendChart({ snapshots, categories, currency }: Category
 
       <ResponsiveContainer width="100%" height={400}>
         <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
           <XAxis 
             dataKey="date" 
             tickFormatter={(val) => format(parseISO(val), 'MMM yy')}
-            stroke="rgba(255,255,255,0.3)"
+            stroke="hsl(var(--muted-foreground))"
             fontSize={12}
             tickLine={false}
             axisLine={false}
           />
           <YAxis 
-            stroke="rgba(255,255,255,0.3)"
+            stroke="hsl(var(--muted-foreground))"
             fontSize={12}
             tickFormatter={(val) => `${getCurrencySymbol(currency)}${(val/1000).toFixed(0)}k`}
             tickLine={false}
@@ -163,9 +163,11 @@ export function CategoryTrendChart({ snapshots, categories, currency }: Category
             contentStyle={{ 
               backgroundColor: 'hsl(var(--card))', 
               borderColor: 'hsl(var(--border))', 
-              borderRadius: '12px' 
+              borderRadius: '12px',
+              color: 'hsl(var(--foreground))'
             }}
-            itemStyle={{ color: 'white' }}
+            itemStyle={{ color: 'hsl(var(--foreground))' }}
+            labelStyle={{ color: 'hsl(var(--muted-foreground))' }}
             formatter={(value: any, name: string) => {
               const categoryId = parseInt(name.replace('cat_', ''));
               const category = sortedCategories.find(c => c.id === categoryId);
