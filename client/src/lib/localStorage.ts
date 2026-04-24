@@ -148,6 +148,15 @@ export const localDB = {
     return this.getCategories();
   },
 
+  updateCategory(id: number, updates: Partial<Omit<Category, 'id'>>): Category | null {
+    const data = getData();
+    const cat = data.categories.find(c => c.id === id);
+    if (!cat) return null;
+    Object.assign(cat, updates);
+    saveData(data);
+    return cat;
+  },
+
   deleteCategory(id: number): void {
     const data = getData();
     data.categories = data.categories.filter(c => c.id !== id);

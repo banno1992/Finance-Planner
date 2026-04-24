@@ -1,10 +1,10 @@
-import { useCategories, useCreateCategory, useDeleteCategory, useExportData, useImportData, useReorderCategories, useSettings, useUpdateSettings } from "@/hooks/use-finance";
+import { useCategories, useCreateCategory, useDeleteCategory, useExportData, useImportData, useReorderCategories, useSettings, useUpdateCategory, useUpdateSettings } from "@/hooks/use-finance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState, useRef } from "react";
-import { Download, Upload, Plus, Trash2, GripVertical, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Download, Upload, Plus, Trash2, GripVertical, Loader2, Pencil, Save, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 
@@ -14,6 +14,7 @@ export default function Settings() {
   const { data: categories } = useCategories();
   const { data: settings } = useSettings();
   const createCategory = useCreateCategory();
+  const updateCategory = useUpdateCategory();
   const deleteCategory = useDeleteCategory();
   const reorderCategories = useReorderCategories();
   const updateSettings = useUpdateSettings();
@@ -24,6 +25,51 @@ export default function Settings() {
 
   const [newCatName, setNewCatName] = useState("");
   const [draggedId, setDraggedId] = useState<number | null>(null);
+  const [editingCatId, setEditingCatId] = useState<number | null>(null);
+  const [editingCatName, setEditingCatName] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingCatId !== null && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingCatId]);
+
+  const startEdit = (id: number, name: string) => {
+    setEditingCatId(id);
+    setEditingCatName(name);
+  };
+
+  const cancelEdit = () => {
+    setEditingCatId(null);
+    setEditingCatName("");
+  };
+
+  const saveEdit = (id: number) => {
+    const trimmed = editingCatName.trim();
+    if (!trimmed) {
+      toast({
+        title: "Name required",
+        description: "Category name cannot be empty.",
+        variant: "destructive",
+      });
+      requestAnimationFrame(() => editInputRef.current?.focus());
+      return;
+    }
+    updateCategory.mutate(
+      { id, data: { name: trimmed } },
+      {
+        onSuccess: () => {
+          cancelEdit();
+          toast({ title: "Category updated", description: `Renamed to "${trimmed}".` });
+        },
+        onError: (err: any) => {
+          toast({ title: "Update failed", description: err.message, variant: "destructive" });
+        },
+      }
+    );
+  };
 
   const handleImportClick = () => {
     fileInputRef.current?.click();
@@ -143,27 +189,84 @@ export default function Settings() {
             </form>
 
             <div className="space-y-2">
-              {categories?.map((cat) => (
-                <div 
-                  key={cat.id} 
-                  draggable
-                  onDragStart={() => handleDragStart(cat.id)}
-                  onDragOver={handleDragOver}
-                  onDrop={() => handleDrop(cat.id)}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-muted/40 border border-border/60 cursor-move hover:bg-muted/70 transition-colors"
-                >
-                  <GripVertical size={16} className="text-muted-foreground flex-shrink-0" />
-                  <span className="flex-1">{cat.name}</span>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-8 w-8 text-muted-foreground hover:text-[hsl(var(--chart-negative))] hover:bg-[hsl(var(--chart-negative))]/10"
-                    onClick={() => deleteCategory.mutate(cat.id)}
+              {categories?.map((cat) => {
+                const isEditing = editingCatId === cat.id;
+                const isAnyEditing = editingCatId !== null;
+                return (
+                  <div
+                    key={cat.id}
+                    draggable={!isAnyEditing}
+                    onDragStart={() => !isAnyEditing && handleDragStart(cat.id)}
+                    onDragOver={handleDragOver}
+                    onDrop={() => !isAnyEditing && handleDrop(cat.id)}
+                    className={`flex items-center gap-2 p-3 rounded-xl bg-muted/40 border border-border/60 transition-colors ${isAnyEditing ? "" : "cursor-move hover:bg-muted/70"}`}
+                    data-testid={`row-category-${cat.id}`}
                   >
-                    <Trash2 size={14} />
-                  </Button>
-                </div>
-              ))}
+                    <GripVertical size={16} className="text-muted-foreground flex-shrink-0" />
+                    {isEditing ? (
+                      <>
+                        <Input
+                          ref={editInputRef}
+                          value={editingCatName}
+                          onChange={(e) => setEditingCatName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveEdit(cat.id);
+                            if (e.key === "Escape") cancelEdit();
+                          }}
+                          aria-label={`Edit name for ${cat.name}`}
+                          className="flex-1 h-8 text-sm bg-background"
+                          data-testid={`input-edit-category-${cat.id}`}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-[hsl(var(--chart-positive))] hover:bg-[hsl(var(--chart-positive))]/10"
+                          onClick={() => saveEdit(cat.id)}
+                          disabled={updateCategory.isPending}
+                          aria-label="Save category name"
+                          data-testid={`button-save-category-${cat.id}`}
+                        >
+                          <Save size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground"
+                          onClick={cancelEdit}
+                          aria-label="Cancel editing"
+                          data-testid={`button-cancel-category-${cat.id}`}
+                        >
+                          <X size={14} />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1" data-testid={`text-category-name-${cat.id}`}>{cat.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                          onClick={() => startEdit(cat.id, cat.name)}
+                          data-testid={`button-edit-category-${cat.id}`}
+                          aria-label={`Edit ${cat.name}`}
+                        >
+                          <Pencil size={14} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-[hsl(var(--chart-negative))] hover:bg-[hsl(var(--chart-negative))]/10"
+                          onClick={() => deleteCategory.mutate(cat.id)}
+                          data-testid={`button-delete-category-${cat.id}`}
+                          aria-label={`Delete ${cat.name}`}
+                        >
+                          <Trash2 size={14} />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
               {categories?.length === 0 && (
                 <p className="text-center text-sm text-muted-foreground py-4">No categories yet.</p>
               )}

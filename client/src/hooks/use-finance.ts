@@ -28,6 +28,18 @@ export function useCreateCategory() {
   });
 }
 
+export function useUpdateCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: Partial<Omit<Category, "id">> }) => {
+      const result = localDB.updateCategory(id, data);
+      if (!result) throw new Error("Category not found");
+      return Promise.resolve(result);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories, refetchType: 'all' }),
+  });
+}
+
 export function useReorderCategories() {
   const queryClient = useQueryClient();
   return useMutation({
