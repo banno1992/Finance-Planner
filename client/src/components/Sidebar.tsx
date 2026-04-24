@@ -24,7 +24,7 @@ export function Sidebar() {
             <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center text-primary">
               <Wallet size={22} />
             </div>
-            <h1 className="font-display font-bold text-xl tracking-tight text-foreground">
+            <h1 className="font-serif font-light text-xl tracking-tight text-foreground">
               Net<span className="text-primary">Worth</span>
             </h1>
           </div>

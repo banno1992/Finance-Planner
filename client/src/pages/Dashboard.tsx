@@ -6,7 +6,7 @@ import {
 import { SnapshotManager } from "@/components/SnapshotManager";
 import { formatCurrency } from "@/lib/currency";
 import {
-  AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid, Line, ComposedChart,
+  Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Line, ComposedChart,
 } from "recharts";
 import { format, addMonths, parseISO } from "date-fns";
 import {
@@ -253,7 +253,7 @@ export default function Dashboard() {
               <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="calmAreaFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={ACCENT} stopOpacity={0.18} />
+                    <stop offset="5%" stopColor={ACCENT} stopOpacity={0.22} />
                     <stop offset="95%" stopColor={ACCENT} stopOpacity={0} />
                   </linearGradient>
                 </defs>
@@ -266,6 +266,22 @@ export default function Dashboard() {
                   axisLine={false}
                   tickMargin={12}
                   minTickGap={30}
+                />
+                {/* Hidden Y-axis so the area+lines auto-fit tightly to the visible data range,
+                    even when toggling student loans / mortgage / pension dramatically shifts values. */}
+                <YAxis
+                  hide
+                  domain={[
+                    (dataMin: number) => {
+                      const range = Math.max(1, Math.abs(dataMin)) * 0.08;
+                      return Math.floor(dataMin - range);
+                    },
+                    (dataMax: number) => {
+                      const range = Math.max(1, Math.abs(dataMax)) * 0.08;
+                      return Math.ceil(dataMax + range);
+                    },
+                  ]}
+                  allowDataOverflow={false}
                 />
                 <Tooltip
                   cursor={{ stroke: "hsl(var(--muted-foreground))", strokeWidth: 1, strokeDasharray: "4 4" }}
@@ -296,6 +312,7 @@ export default function Dashboard() {
                   strokeWidth={2}
                   fillOpacity={1}
                   fill="url(#calmAreaFill)"
+                  baseValue="dataMin"
                   activeDot={{ r: 4, fill: ACCENT, stroke: "hsl(var(--card))", strokeWidth: 2 }}
                   isAnimationActive={false}
                   connectNulls

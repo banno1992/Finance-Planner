@@ -20,7 +20,7 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222 35% 12%;
 
-  --primary: 215 50% 35%;
+  --primary: 162 80% 34%;          /* #119c74 */
   --primary-foreground: 0 0% 100%;
 
   --secondary: 215 25% 90%;
@@ -29,7 +29,7 @@
   --muted: 215 20% 92%;
   --muted-foreground: 215 15% 40%;
 
-  --accent: 215 50% 35%;
+  --accent: 162 80% 34%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 70% 50%;
@@ -37,11 +37,11 @@
 
   --border: 215 25% 88%;
   --input: 215 25% 88%;
-  --ring: 215 50% 35%;
+  --ring: 162 80% 34%;
 
-  /* Calm chart palette - light mode (muted, banker-clean) */
-  --chart-accent: 215 35% 40%;
-  --chart-positive: 150 40% 35%;
+  /* Calm chart palette - light mode */
+  --chart-accent: 162 80% 34%;
+  --chart-positive: 162 70% 32%;
   --chart-negative: 0 55% 50%;
 
   --color-income: 150 40% 35%;
@@ -62,16 +62,16 @@
   --popover: 222 47% 7%;
   --popover-foreground: 210 40% 98%;
 
-  --primary: 190 100% 50%;
+  --primary: 162 65% 48%;          /* lifted #119c74 for dark bg */
   --primary-foreground: 222 47% 11%;
 
-  --secondary: 262 80% 50%;
+  --secondary: 217 33% 22%;
   --secondary-foreground: 210 40% 98%;
 
   --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 70%;
+  --muted-foreground: 215 20% 72%;
 
-  --accent: 190 100% 50%;
+  --accent: 162 65% 48%;
   --accent-foreground: 222 47% 11%;
 
   --destructive: 0 84% 60%;
@@ -79,11 +79,11 @@
 
   --border: 217 33% 22%;
   --input: 217 33% 22%;
-  --ring: 190 100% 50%;
+  --ring: 162 65% 48%;
 
-  /* Calm chart palette - dark mode (stronger so they're distinguishable) */
-  --chart-accent: 195 75% 65%;
-  --chart-positive: 150 60% 60%;
+  /* Calm chart palette - dark mode */
+  --chart-accent: 162 65% 55%;
+  --chart-positive: 162 55% 60%;
   --chart-negative: 0 70% 65%;
 
   --color-income: 142 71% 55%;
@@ -100,8 +100,10 @@
     @apply bg-background text-foreground font-body antialiased selection:bg-primary/20 selection:text-primary;
   }
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight;
+    @apply font-serif tracking-tight font-light;
   }
+  /* Numbers feel calmer in tabular mono everywhere */
+  .num, .tabular-nums { font-variant-numeric: tabular-nums; }
 }
 
 @layer utilities {
