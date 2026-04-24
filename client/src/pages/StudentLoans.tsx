@@ -240,7 +240,7 @@ export default function StudentLoans() {
                     </div>
                     <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
                       <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Payoff Date</p>
-                      <p className="font-serif text-base font-light text-foreground mt-1">{format(metrics.payoffDate, 'MMM yyyy')}</p>
+                      <p className="font-serif text-2xl font-light text-foreground tabular-nums mt-1">{format(metrics.payoffDate, 'MMM yyyy')}</p>
                     </div>
                     <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
                       <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Total Interest</p>
@@ -248,7 +248,7 @@ export default function StudentLoans() {
                     </div>
                     <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
                       <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Monthly Payment</p>
-                      <p className="font-serif text-base font-light text-foreground tabular-nums mt-1">{formatCurrency(monthlyPayment, currency)}</p>
+                      <p className="font-serif text-2xl font-light text-foreground tabular-nums mt-1">{formatCurrency(monthlyPayment, currency)}</p>
                     </div>
                   </div>
 
