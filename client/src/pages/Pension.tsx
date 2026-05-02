@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/currency";
 import { Plus, Trash2, Edit2, Save, X, TrendingUp, PiggyBank, Target, Calculator, Loader2, Info, Landmark, Calendar } from "lucide-react";
@@ -548,15 +549,15 @@ export default function Pension() {
                         <TrendingUp size={18} className="text-primary" />
                         Pension Growth Projection
                       </CardTitle>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs px-2 gap-1"
-                        onClick={() => setShowInflationAdjusted(prev => !prev)}
-                        data-testid="button-chart-inflation-toggle"
-                      >
-                        {showInflationAdjusted ? "Real (today's £)" : "Nominal"}
-                      </Button>
+                      <label className="flex items-center gap-2 text-xs text-muted-foreground select-none cursor-pointer">
+                        <span className="uppercase tracking-[0.14em]">Today's £</span>
+                        <Switch
+                          checked={showInflationAdjusted}
+                          onCheckedChange={setShowInflationAdjusted}
+                          data-testid="button-chart-inflation-toggle"
+                          aria-label="Show values in today's money (inflation-adjusted)"
+                        />
+                      </label>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -682,15 +683,15 @@ export default function Pension() {
                               </Button>
                             ))}
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs px-2 gap-1"
-                            onClick={() => setShowInflationAdjusted(prev => !prev)}
-                            data-testid="button-toggle-nominal-real"
-                          >
-                            {showInflationAdjusted ? "Real (today's £)" : "Nominal"}
-                          </Button>
+                          <label className="flex items-center gap-2 text-xs text-muted-foreground select-none cursor-pointer">
+                            <span className="uppercase tracking-[0.14em]">Today's £</span>
+                            <Switch
+                              checked={showInflationAdjusted}
+                              onCheckedChange={setShowInflationAdjusted}
+                              data-testid="button-toggle-nominal-real"
+                              aria-label="Show values in today's money (inflation-adjusted)"
+                            />
+                          </label>
                         </div>
                         <div className="text-center py-2">
                           <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mb-2">{s.label} Scenario — Pot at Retirement</p>
