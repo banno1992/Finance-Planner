@@ -217,8 +217,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Savings Rate Arc */}
-          <div className="flex items-center gap-4">
+          {/* Savings Rate Arc — desktop only (mobile version sits under the income strip) */}
+          <div className="hidden lg:flex items-center gap-4">
             <div className="flex flex-col items-end">
               <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Savings Rate</span>
               <span className="font-serif text-2xl font-light tabular-nums text-foreground" data-testid="text-savings-rate">
@@ -407,6 +407,32 @@ export default function Dashboard() {
           >
             {formatCurrency(monthlySurplus, currency)}
           </p>
+        </div>
+      </section>
+
+      {/* Savings Rate — mobile only (sits under the income / expenses / surplus strip) */}
+      <section className="lg:hidden -mt-4 flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-muted/40 px-4 py-3">
+        <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+          Savings Rate
+        </span>
+        <div className="flex items-center gap-3">
+          <span className="font-serif text-xl font-light tabular-nums text-foreground" data-testid="text-savings-rate-mobile">
+            {Math.round(savingsRate)}%
+          </span>
+          <div className="relative h-9 w-9">
+            <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
+              <path
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none" strokeWidth="3" stroke="hsl(var(--muted))"
+              />
+              <path
+                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                fill="none" strokeWidth="3" strokeLinecap="round"
+                stroke={ACCENT}
+                strokeDasharray={`${Math.max(0, Math.min(100, savingsRate))}, 100`}
+              />
+            </svg>
+          </div>
         </div>
       </section>
 
