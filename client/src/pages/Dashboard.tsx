@@ -59,7 +59,7 @@ export default function Dashboard() {
   const [includePension, setIncludePension] = useState(false);
   const [breakdownOpen, setBreakdownOpen] = useState(true);
   const [showAllHistory, setShowAllHistory] = useState(false);
-  const [showProjection, setShowProjection] = useState(true);
+  const [showProjection, setShowProjection] = useState(false);
   const snapshotsRef = useRef<HTMLDivElement>(null);
 
   const isLoading = loadingSnapshots || loadingCashflows || loadingStudentLoans
