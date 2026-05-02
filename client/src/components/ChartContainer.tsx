@@ -1,6 +1,4 @@
 import { cn } from "@/lib/utils";
-import { Info } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface ChartContainerProps {
   title: string;
@@ -27,30 +25,18 @@ export function ChartContainer({
         className,
       )}
     >
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="font-serif text-lg font-light tracking-tight text-foreground">
-              {title}
-            </h3>
-            {description && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Info
-                      size={14}
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="max-w-xs text-xs">{description}</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </div>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <h3 className="font-serif text-lg font-light tracking-tight text-foreground">
+            {title}
+          </h3>
+          {description && (
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              {description}
+            </p>
+          )}
         </div>
-        {finalAction && <div>{finalAction}</div>}
+        {finalAction && <div className="flex-shrink-0">{finalAction}</div>}
       </div>
 
       <div className="flex-1 w-full min-h-[250px] relative">{children}</div>

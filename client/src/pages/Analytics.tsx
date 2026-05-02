@@ -266,7 +266,10 @@ export default function Analytics() {
         )}
 
         <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
-          <h3 className="font-serif text-lg font-light tracking-tight mb-6">Advanced Insights</h3>
+          <h3 className="font-serif text-lg font-light tracking-tight">Advanced Insights</h3>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed mb-6">
+            Average monthly net-worth change over the last 3, 6 and 12 months — useful for spotting whether your growth is accelerating or slowing.
+          </p>
           <div className="space-y-5 text-sm">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">3-Month Trailing Avg</p>
@@ -287,7 +290,10 @@ export default function Analytics() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {sortedSnapshots.length >= 3 ? (
           <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
-            <h3 className="font-serif text-lg font-light tracking-tight mb-6">Savings Analysis</h3>
+            <h3 className="font-serif text-lg font-light tracking-tight">Savings Analysis</h3>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed mb-6">
+              Compares the surplus your cashflows predict each month against the actual average growth recorded in your snapshots. The gap shows how far behind (or ahead) of plan you are.
+            </p>
             <div className="space-y-5 text-sm">
               <div>
                 <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Projected Monthly Surplus</p>
@@ -315,7 +321,10 @@ export default function Analytics() {
         )}
         
         <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
-          <h3 className="font-serif text-lg font-light tracking-tight mb-6">Savings Rate Comparison</h3>
+          <h3 className="font-serif text-lg font-light tracking-tight">Savings Rate Comparison</h3>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed mb-6">
+            Your savings rate is the share of monthly income you keep. This compares the rate your cashflows project versus the rate your snapshots actually achieved.
+          </p>
           <div className="space-y-5 text-sm">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">Projected Savings Rate</p>
