@@ -73,6 +73,7 @@ All data operations go through `client/src/lib/localStorage.ts` which provides a
 - Sensitivity analysis slider (0-500 monthly contribution increase)
 - UK State Pension integration (only included if retirement age >= 67)
 - 4% drawdown rule for retirement income projections
+- **Race to £1M**: Animated progress bar tracking current pot vs £1M target, projected crossing month/year (with fractional-year interpolation), contributions-vs-compound-growth breakdown that demonstrates the compounding story, and "what if" sliders for extra monthly contribution and extra growth-rate assumption. Handles edge cases (already past £1M, never reaches in 60-year horizon, negative growth)
 
 ### Data Backup
 - Export all data to JSON file

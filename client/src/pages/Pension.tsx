@@ -9,9 +9,9 @@ import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { formatCurrency } from "@/lib/currency";
-import { Plus, Trash2, Edit2, Save, X, TrendingUp, PiggyBank, Target, Calculator, Loader2, Info, Landmark, Calendar } from "lucide-react";
-import { differenceInYears, parseISO } from "date-fns";
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
+import { Plus, Trash2, Edit2, Save, X, TrendingUp, PiggyBank, Target, Calculator, Loader2, Info, Landmark, Calendar, Trophy } from "lucide-react";
+import { differenceInYears, parseISO, addMonths, format } from "date-fns";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Area, AreaChart, ReferenceLine } from "recharts";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
@@ -73,6 +73,8 @@ export default function Pension() {
   const [sensitivityContribution, setSensitivityContribution] = useState(0);
   const [showInflationAdjusted, setShowInflationAdjusted] = useState(true);
   const [selectedScenario, setSelectedScenario] = useState<"low" | "medium" | "high">("medium");
+  const [raceExtraContribution, setRaceExtraContribution] = useState(0);
+  const [raceExtraGrowth, setRaceExtraGrowth] = useState(0);
 
   const pension = pensions?.[0];
 
@@ -177,6 +179,73 @@ export default function Pension() {
       totalMonthlyHighReal: includeState ? Math.round((finalProjection.highReal * drawdownRate + annualStatePension / inflationFactor) / 12) : Math.round((finalProjection.highReal * drawdownRate) / 12),
     };
   }, [projections, pension, formData, isAdding, editingId]);
+
+  const raceToMillion = useMemo(() => {
+    const p = (editingId !== null || isAdding) ? formData : pension ? {
+      currentPotValue: pension.currentPotValue,
+      userMonthlyContribution: pension.userMonthlyContribution,
+      employerMonthlyContribution: pension.employerMonthlyContribution,
+      expectedGrowthRate: pension.expectedGrowthRate,
+    } : null;
+    if (!p) return null;
+
+    const TARGET = 1_000_000;
+    const startingPot = parseFloat(p.currentPotValue) || 0;
+    const baseMonthly = (parseFloat(p.userMonthlyContribution) || 0) + (parseFloat(p.employerMonthlyContribution) || 0);
+    const monthlyContrib = Math.max(0, baseMonthly + raceExtraContribution);
+    const annualContrib = monthlyContrib * 12;
+    const baseRate = parseFloat(p.expectedGrowthRate) || 0;
+    const rate = (baseRate + raceExtraGrowth) / 100;
+
+    const HORIZON = 60;
+    let balance = startingPot;
+    let yearsReached: number | null = null;
+    const alreadyThere = startingPot >= TARGET;
+
+    if (alreadyThere) {
+      yearsReached = 0;
+    } else {
+      for (let y = 0; y < HORIZON; y++) {
+        const next = balance * (1 + rate) + annualContrib;
+        if (next >= TARGET && balance < TARGET) {
+          const needed = TARGET - balance;
+          const grew = next - balance;
+          yearsReached = y + (grew > 0 ? needed / grew : 1);
+          balance = TARGET;
+          break;
+        }
+        balance = next;
+      }
+    }
+
+    const reached = yearsReached !== null;
+    const yearsContributed = reached ? yearsReached! : HORIZON;
+    const finalBalance = reached ? TARGET : balance;
+    const totalContributions = startingPot + annualContrib * yearsContributed;
+    const growth = finalBalance - totalContributions;
+    const positiveBasis = totalContributions + Math.max(0, growth);
+    const contributionsPct = positiveBasis > 0 ? (totalContributions / positiveBasis) * 100 : 100;
+    const growthPct = Math.max(0, 100 - contributionsPct);
+    const progressPct = Math.min(100, (startingPot / TARGET) * 100);
+
+    return {
+      target: TARGET,
+      currentPot: startingPot,
+      progressPct,
+      reached,
+      alreadyThere,
+      yearsToReach: yearsReached,
+      monthsToReach: reached ? Math.max(0, Math.round(yearsReached! * 12)) : null,
+      finalBalance,
+      totalContributions,
+      growth,
+      contributionsPct,
+      growthPct,
+      monthlyContrib,
+      effectiveRate: rate * 100,
+      shortfall: reached ? 0 : Math.max(0, TARGET - balance),
+    };
+  }, [pension, formData, isAdding, editingId, raceExtraContribution, raceExtraGrowth]);
 
   const evaluateExpression = (val: string): string => {
     const trimmed = val.trim();
@@ -769,6 +838,187 @@ export default function Pension() {
                     </CollapsibleContent>
                   </Card>
                 </Collapsible>
+
+                {raceToMillion && (
+                  <Card className="rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="flex items-center gap-2 font-serif text-lg font-light tracking-tight">
+                        <Trophy size={18} className="text-primary" />
+                        Race to {getCurrencySymbol(currency)}1M
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        How long until you cross the magic million — and how much of it comes from compounding rather than what you put in.
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      {/* Animated progress bar */}
+                      <div className="space-y-3">
+                        <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                          <span
+                            className="font-serif text-2xl font-light text-foreground tabular-nums"
+                            data-testid="text-race-current-pot"
+                          >
+                            {formatCurrency(raceToMillion.currentPot, currency)}
+                          </span>
+                          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                            {raceToMillion.progressPct.toFixed(1)}% of {formatCurrency(raceToMillion.target, currency)}
+                          </span>
+                        </div>
+                        <div
+                          className="h-3 w-full rounded-full bg-muted/60 overflow-hidden"
+                          role="progressbar"
+                          aria-valuenow={raceToMillion.progressPct}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-label={`Progress to ${getCurrencySymbol(currency)}1M`}
+                        >
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-1000 ease-out"
+                            style={{ width: `${Math.max(1.5, raceToMillion.progressPct)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Crossing date / years */}
+                      {raceToMillion.alreadyThere ? (
+                        <div className="p-4 bg-[hsl(var(--chart-positive))]/10 rounded-2xl border border-[hsl(var(--chart-positive))]/20 text-center">
+                          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Already there</p>
+                          <p
+                            className="font-serif text-2xl font-light text-[hsl(var(--chart-positive))] tabular-nums mt-1"
+                            data-testid="text-race-crossing-date"
+                          >
+                            You crossed {getCurrencySymbol(currency)}1M
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-2">Your pot is {formatCurrency(raceToMillion.currentPot - raceToMillion.target, currency)} above the million mark.</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Crosses {getCurrencySymbol(currency)}1M</p>
+                            <p
+                              className="font-serif text-2xl font-light text-foreground tabular-nums mt-1"
+                              data-testid="text-race-crossing-date"
+                            >
+                              {raceToMillion.reached
+                                ? format(addMonths(new Date(), raceToMillion.monthsToReach!), 'MMM yyyy')
+                                : '—'}
+                            </p>
+                          </div>
+                          <div className="p-4 bg-muted/40 rounded-2xl border border-border/60">
+                            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Years to go</p>
+                            <p
+                              className="font-serif text-2xl font-light text-foreground tabular-nums mt-1"
+                              data-testid="text-race-years-to-go"
+                            >
+                              {raceToMillion.reached ? raceToMillion.yearsToReach!.toFixed(1) : 'Not in 60 yrs'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Contributions vs Growth split */}
+                      <div className="space-y-2">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                          {raceToMillion.reached
+                            ? `What makes up the ${getCurrencySymbol(currency)}1M`
+                            : `Composition after 60 years`}
+                        </p>
+                        <div className="flex h-4 w-full rounded-full overflow-hidden border border-border/60">
+                          <div
+                            className="bg-[hsl(var(--chart-accent))] transition-all duration-700 ease-out"
+                            style={{ width: `${raceToMillion.contributionsPct}%` }}
+                          />
+                          <div
+                            className="bg-[hsl(var(--chart-positive))] transition-all duration-700 ease-out"
+                            style={{ width: `${raceToMillion.growthPct}%` }}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-block h-2 w-2 rounded-full bg-[hsl(var(--chart-accent))]" />
+                              <span className="text-xs text-muted-foreground">Your contributions</span>
+                            </div>
+                            <p className="font-serif text-lg font-light text-foreground tabular-nums mt-0.5">
+                              {formatCurrency(raceToMillion.totalContributions, currency)}
+                              <span className="ml-2 text-xs text-muted-foreground tabular-nums">
+                                {raceToMillion.contributionsPct.toFixed(0)}%
+                              </span>
+                            </p>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="inline-block h-2 w-2 rounded-full bg-[hsl(var(--chart-positive))]" />
+                              <span className="text-xs text-muted-foreground">Compound growth</span>
+                            </div>
+                            <p
+                              className={`font-serif text-lg font-light tabular-nums mt-0.5 ${raceToMillion.growth < 0 ? 'text-[hsl(var(--chart-negative))]' : 'text-[hsl(var(--chart-positive))]'}`}
+                              data-testid="text-race-growth"
+                            >
+                              {raceToMillion.growth < 0 ? '−' : ''}{formatCurrency(Math.abs(raceToMillion.growth), currency)}
+                              <span className="ml-2 text-xs text-muted-foreground tabular-nums">
+                                {raceToMillion.growth < 0 ? 'loss' : `${raceToMillion.growthPct.toFixed(0)}%`}
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* What-if sliders */}
+                      <div className="pt-4 space-y-5 border-t border-border/60">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">What if</p>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Extra monthly contribution</span>
+                            <span className="font-medium text-primary tabular-nums">
+                              {raceExtraContribution >= 0 ? '+' : ''}{formatCurrency(raceExtraContribution, currency)}
+                            </span>
+                          </div>
+                          <Slider
+                            value={[raceExtraContribution]}
+                            onValueChange={([v]) => setRaceExtraContribution(v)}
+                            max={500}
+                            step={25}
+                            data-testid="slider-race-contribution"
+                          />
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>+{formatCurrency(0, currency)}</span>
+                            <span>+{formatCurrency(500, currency)}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Extra growth assumption</span>
+                            <span className="font-medium text-primary tabular-nums">
+                              {raceExtraGrowth >= 0 ? '+' : ''}{raceExtraGrowth.toFixed(1)}%
+                            </span>
+                          </div>
+                          <Slider
+                            value={[raceExtraGrowth]}
+                            onValueChange={([v]) => setRaceExtraGrowth(v)}
+                            min={-2}
+                            max={3}
+                            step={0.5}
+                            data-testid="slider-race-growth"
+                          />
+                          <div className="flex justify-between text-[10px] text-muted-foreground">
+                            <span>−2%</span>
+                            <span>+3%</span>
+                          </div>
+                        </div>
+                        {(raceExtraContribution > 0 || raceExtraGrowth !== 0) && (
+                          <button
+                            onClick={() => { setRaceExtraContribution(0); setRaceExtraGrowth(0); }}
+                            className="text-xs text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground transition-colors"
+                            data-testid="button-race-reset"
+                          >
+                            Reset what-if
+                          </button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {retirementSummary && retirementSummary.statePensionAnnual > 0 && (
                   <Card className="rounded-3xl border-border bg-card/60 backdrop-blur-xl shadow-sm">
