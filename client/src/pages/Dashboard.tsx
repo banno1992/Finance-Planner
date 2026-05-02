@@ -60,6 +60,7 @@ export default function Dashboard() {
   const [breakdownOpen, setBreakdownOpen] = useState(true);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [showProjection, setShowProjection] = useState(false);
+  const [projectionYears, setProjectionYears] = useState(1);
   const snapshotsRef = useRef<HTMLDivElement>(null);
 
   const isLoading = loadingSnapshots || loadingCashflows || loadingStudentLoans
@@ -190,18 +191,25 @@ export default function Dashboard() {
       / (historicalSeries.length - 1)
     : 0;
 
+  const projectionMonths = projectionYears * 12;
+  // Keep the chart readable for long horizons: sample every month up to 2y,
+  // every 3 months up to 10y, then every 6 months beyond that.
+  const projectionStep = projectionMonths <= 24 ? 1 : projectionMonths <= 120 ? 3 : 6;
   const projectionSeries = currentSnapshot
-    ? Array.from({ length: 12 }).map((_, i) => {
-        const monthsAhead = i + 1;
-        const date = addMonths(parseISO(currentSnapshot.month), monthsAhead);
-        const baseAmount = Number(currentSnapshot.totalNetWorth);
-        return {
-          date: format(date, "yyyy-MM-dd"),
-          label: format(date, "MMM yy"),
-          projectedAmount: adjustAtMonth(baseAmount + monthlySurplus * monthsAhead, monthsAhead),
-          actualAmount: adjustAtMonth(baseAmount + actualMonthlySurplus * monthsAhead, monthsAhead),
-        };
-      })
+    ? Array.from(
+        { length: Math.ceil(projectionMonths / projectionStep) },
+        (_, i) => {
+          const monthsAhead = Math.min((i + 1) * projectionStep, projectionMonths);
+          const date = addMonths(parseISO(currentSnapshot.month), monthsAhead);
+          const baseAmount = Number(currentSnapshot.totalNetWorth);
+          return {
+            date: format(date, "yyyy-MM-dd"),
+            label: format(date, projectionMonths > 24 ? "MMM ''yy" : "MMM yy"),
+            projectedAmount: adjustAtMonth(baseAmount + monthlySurplus * monthsAhead, monthsAhead),
+            actualAmount: adjustAtMonth(baseAmount + actualMonthlySurplus * monthsAhead, monthsAhead),
+          };
+        }
+      )
     : [];
 
   const chartData = showProjection
@@ -448,13 +456,45 @@ export default function Dashboard() {
               </span>
             </>
           )}
-          <button
-            onClick={() => setShowProjection(v => !v)}
-            className="ml-auto underline decoration-border underline-offset-4 hover:text-foreground transition-colors"
-            data-testid="button-toggle-projection"
-          >
-            {showProjection ? "Hide projection" : "Show projection"}
-          </button>
+          <div className="ml-auto flex items-center gap-3">
+            {showProjection && (
+              <div
+                className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-muted/30 p-0.5"
+                role="radiogroup"
+                aria-label="Projection horizon"
+                data-testid="group-projection-horizon"
+              >
+                {[1, 2, 5, 10, 20, 30].map(y => {
+                  const active = projectionYears === y;
+                  return (
+                    <button
+                      key={y}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setProjectionYears(y)}
+                      className={
+                        "rounded-full px-2.5 py-0.5 text-[11px] tabular-nums transition-colors " +
+                        (active
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground")
+                      }
+                      data-testid={`button-horizon-${y}y`}
+                    >
+                      {y}y
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <button
+              onClick={() => setShowProjection(v => !v)}
+              className="underline decoration-border underline-offset-4 hover:text-foreground transition-colors"
+              data-testid="button-toggle-projection"
+            >
+              {showProjection ? "Hide projection" : "Show projection"}
+            </button>
+          </div>
         </div>
       </section>
 
