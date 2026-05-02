@@ -76,11 +76,93 @@ export default function Dashboard() {
   const pensionValue = pension ? Number(pension.currentPotValue) : 0;
   const pensionIncludedInNetWorth = pension?.includeInNetWorth === 1;
 
+  // Forward projections that mirror the dedicated pages: student loans amortise
+  // down, mortgage equity grows as the loan balance is paid off, and pensions
+  // compound monthly using each plan's medium growth rate (default 5%).
+  const studentLoanBalanceAt = useMemo(() => {
+    const loans = (studentLoans || []).map(l => ({
+      monthlyRate: Number(l.annualInterestRate) / 100 / 12,
+      payment: Number(l.monthlyPayment),
+      initial: Number(l.loanAmount),
+    }));
+    return (months: number) => {
+      let total = 0;
+      for (const l of loans) {
+        let bal = l.initial;
+        for (let m = 0; m < months && bal > 0.01; m++) {
+          const interest = bal * l.monthlyRate;
+          const principal = l.payment - interest;
+          if (principal <= 0) break; // payment can't cover interest, freeze
+          bal = Math.max(0, bal - principal);
+        }
+        total += bal;
+      }
+      return total;
+    };
+  }, [studentLoans]);
+
+  const mortgageEquityAt = useMemo(() => {
+    const items = (mortgages || []).map(m => ({
+      monthlyRate: Number(m.annualInterestRate) / 100 / 12,
+      payment: Number(m.monthlyPayment) + Number(m.overpayment || 0),
+      initial: Number(m.loanAmount),
+      propertyValue: Number(m.propertyValue),
+    }));
+    return (months: number) => {
+      let equity = 0;
+      for (const m of items) {
+        let bal = m.initial;
+        for (let mo = 0; mo < months && bal > 0.01; mo++) {
+          const interest = bal * m.monthlyRate;
+          const principal = m.payment - interest;
+          if (principal <= 0) break;
+          bal = Math.max(0, bal - principal);
+        }
+        equity += m.propertyValue - bal;
+      }
+      return equity;
+    };
+  }, [mortgages]);
+
+  const pensionValueAt = useMemo(() => {
+    if (!pension) return (_months: number) => 0;
+    const startVal = Number(pension.currentPotValue) || 0;
+    const monthlyContrib = (Number(pension.userMonthlyContribution) || 0)
+      + (Number(pension.employerMonthlyContribution) || 0);
+    const annualRate = (Number(pension.expectedGrowthRate) || 5) / 100;
+    const annualContrib = monthlyContrib * 12;
+    // Annual compounding (matches Pension page's source-of-truth math) with
+    // pro-rata growth + contributions for partial years so the 12-month chart
+    // still shows a smooth monthly curve.
+    return (months: number) => {
+      if (months <= 0) return startVal;
+      let v = startVal;
+      const wholeYears = Math.floor(months / 12);
+      const remainderMonths = months - wholeYears * 12;
+      for (let y = 0; y < wholeYears; y++) {
+        v = v * (1 + annualRate) + annualContrib;
+      }
+      if (remainderMonths > 0) {
+        const frac = remainderMonths / 12;
+        v = v * (1 + annualRate * frac) + annualContrib * frac;
+      }
+      return v;
+    };
+  }, [pension]);
+
   const adjust = (base: number) => {
     let v = base;
     if (includeStudentLoans) v -= studentLoanDebt;
     if (includeMortgage) v += mortgageEquity;
     if (includePension || pensionIncludedInNetWorth) v += pensionValue;
+    return v;
+  };
+
+  const adjustAtMonth = (base: number, monthsAhead: number) => {
+    let v = base;
+    if (includeStudentLoans) v -= studentLoanBalanceAt(monthsAhead);
+    if (includeMortgage) v += mortgageEquityAt(monthsAhead);
+    if (includePension || pensionIncludedInNetWorth) v += pensionValueAt(monthsAhead);
     return v;
   };
 
@@ -110,12 +192,14 @@ export default function Dashboard() {
 
   const projectionSeries = currentSnapshot
     ? Array.from({ length: 12 }).map((_, i) => {
-        const date = addMonths(parseISO(currentSnapshot.month), i + 1);
+        const monthsAhead = i + 1;
+        const date = addMonths(parseISO(currentSnapshot.month), monthsAhead);
+        const baseAmount = Number(currentSnapshot.totalNetWorth);
         return {
           date: format(date, "yyyy-MM-dd"),
           label: format(date, "MMM yy"),
-          projectedAmount: currentNetWorth + (monthlySurplus * (i + 1)),
-          actualAmount: currentNetWorth + (actualMonthlySurplus * (i + 1)),
+          projectedAmount: adjustAtMonth(baseAmount + monthlySurplus * monthsAhead, monthsAhead),
+          actualAmount: adjustAtMonth(baseAmount + actualMonthlySurplus * monthsAhead, monthsAhead),
         };
       })
     : [];

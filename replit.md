@@ -66,6 +66,7 @@ All data operations go through `client/src/lib/localStorage.ts` which provides a
 - Optional inclusion of student loans, mortgage equity, and pension in net worth
 - Growth projections based on current savings rate
 - Category Trends chart: Line graph showing individual asset category values over time with toggleable visibility and y-axis truncation
+- **Dynamic forward projections**: When student loan / mortgage / pension toggles are on, the 12-month projection lines reuse the same logic as the dedicated pages — student loan balances amortise down month-by-month, mortgage equity grows as the loan principal is paid off (property value held flat), and pension pot compounds monthly using each plan's medium growth rate (default 5%) plus user + employer contributions. Historical points still apply current static balances since per-month historical loan/pension values aren't stored.
 
 ### Pension Tracker
 - Three scenario modeling (low 3%, medium 5%, high 7% growth)
