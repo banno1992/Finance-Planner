@@ -29,10 +29,10 @@ interface PreviewRow {
   isTotal: boolean;
 }
 
-// Totals keyword must be the WHOLE name (case-insensitive, ignoring
-// trailing punctuation/whitespace). "Monthly fee" is a real expense, while
-// "Monthly" on its own is treated as a totals row.
-const TOTAL_RE = /^(monthly\s+total|grand\s+total|sub\s*total|monthly|totals?|sum)[\s:.\-]*$/i;
+// Names that START WITH a totals keyword are flagged as a likely totals row
+// (case-insensitive). They're excluded from the import by default but the
+// user can re-tick the include checkbox if it was a false positive.
+const TOTAL_RE = /^\s*(monthly\s+total|grand\s+total|sub\s*total|monthly|totals?|sum)\b/i;
 
 // Split a line into [name, amountText]. Tab takes priority. Otherwise we walk
 // backwards and pull the trailing token that looks like a number/currency
@@ -155,10 +155,11 @@ export function BulkImportExpenses({ onImported }: { onImported?: () => void }) 
       });
       clearAll();
       onImported?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const description = err instanceof Error ? err.message : "Something went wrong while saving.";
       toast({
         title: "Import failed",
-        description: err?.message ?? "Something went wrong while saving.",
+        description,
         variant: "destructive",
       });
     } finally {
