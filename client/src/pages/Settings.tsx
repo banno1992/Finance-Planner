@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { Download, Upload, Plus, Trash2, GripVertical, Loader2, Pencil, Save, X } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { BulkImportExpenses } from "@/components/BulkImportExpenses";
 
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "INR", "JPY"];
 
@@ -430,6 +431,8 @@ export default function Settings() {
               />
             </div>
           </div>
+
+          <BulkImportExpenses />
 
           <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
             <h3 className="font-serif text-xl font-light tracking-tight mb-4">Application</h3>
