@@ -362,8 +362,11 @@ export default function Cashflow() {
                 // For spend buckets: over target = bad. For savings: under target = bad.
                 const overspend = isSpend ? actual > target : actual < target;
                 const diff = isSpend ? actual - target : target - actual;
-                // Bar fill = % of target (capped at 200% so it doesn't blow out the layout)
-                const fillPct = target > 0 ? Math.min(200, (actual / target) * 100) : 0;
+                // Bar fill = % of target, clamped to 100% of the bar's width.
+                // Overspending is communicated via the row tint, the red amount
+                // colour, and the explicit "Over by" flag rather than by letting
+                // the bar overflow.
+                const fillPct = target > 0 ? Math.min(100, (actual / target) * 100) : 0;
                 const barColor = overspend
                   ? "hsl(var(--chart-negative))"
                   : isSpend
@@ -373,7 +376,12 @@ export default function Cashflow() {
                 return (
                   <div
                     key={t.key}
-                    className="rounded-2xl border border-border/60 bg-muted/40 p-4 space-y-2"
+                    className={
+                      "rounded-2xl border p-4 space-y-2 transition-colors " +
+                      (overspend
+                        ? "border-[hsl(var(--chart-negative))]/40 bg-[hsl(var(--chart-negative))]/5"
+                        : "border-border/60 bg-muted/40")
+                    }
                     data-testid={`row-budget-${t.key}`}
                   >
                     <div className="flex items-baseline justify-between gap-2 flex-wrap">
