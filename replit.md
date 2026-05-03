@@ -77,6 +77,11 @@ All data operations go through `client/src/lib/localStorage.ts` which provides a
 - 4% drawdown rule for retirement income projections
 - **Race to £1M**: Animated progress bar tracking current pot vs £1M target, projected crossing month/year (with fractional-year interpolation), contributions-vs-compound-growth breakdown that demonstrates the compounding story, and "what if" sliders for extra monthly contribution and extra growth-rate assumption. Handles edge cases (already past £1M, never reaches in 60-year horizon, negative growth)
 
+### Cashflow & Budget
+- Recurring monthly income and expense items, each editable in place.
+- **Need / Want bucket on every expense** — drives the 50/30/20 budget. Legacy expenses without a bucket default to "Need" so older data keeps working.
+- **50/30/20 Budget section** — below the income/expense columns: shows Needs (50%), Wants (30%), Savings (20%) targets vs actuals as percentage-of-income, with a thin progress bar per row, an over/under flag in the negative chart color when a bucket is over (or savings are under) target, and a one-line verdict ("On track" / "Wants are over budget" / etc.). Savings is computed as `income − needs − wants`; negative savings shows as a deficit.
+
 ### Data Backup
 - Export all data to JSON file
 - Import data from JSON file (useful for migrating between devices)

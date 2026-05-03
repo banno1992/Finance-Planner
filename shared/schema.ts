@@ -37,6 +37,8 @@ export const cashflows = pgTable("cashflows", {
   name: text("name").notNull(),
   amount: numeric("amount").notNull(),
   type: text("type", { enum: ["income", "expense"] }).notNull(),
+  // For expenses only: 50/30/20 budgeting bucket. Null for income.
+  bucket: text("bucket", { enum: ["needs", "wants"] }),
 });
 
 // Student loans

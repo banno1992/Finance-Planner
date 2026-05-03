@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Wallet } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useCreateCashflow, useSettings } from "@/hooks/use-finance";
 import { getCurrencySymbol } from "@/lib/currency";
 
@@ -18,9 +18,10 @@ export function AddCashflowDialog({ defaultType = "expense", onCashflowAdded }: 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">(defaultType);
+  const [bucket, setBucket] = useState<"needs" | "wants">("needs");
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
-  
+
   const createCashflow = useCreateCashflow();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -30,13 +31,15 @@ export function AddCashflowDialog({ defaultType = "expense", onCashflowAdded }: 
     createCashflow.mutate({
       name,
       amount: amount.toString(),
-      type
+      type,
+      bucket: type === "expense" ? bucket : null,
     }, {
       onSuccess: () => {
         setOpen(false);
         setName("");
         setAmount("");
         setType(defaultType);
+        setBucket("needs");
         onCashflowAdded?.();
       }
     });
@@ -57,7 +60,7 @@ export function AddCashflowDialog({ defaultType = "expense", onCashflowAdded }: 
           <div className="space-y-2">
             <Label>Type</Label>
             <Select value={type} onValueChange={(v: any) => setType(v)}>
-              <SelectTrigger>
+              <SelectTrigger data-testid="select-cashflow-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -66,34 +69,75 @@ export function AddCashflowDialog({ defaultType = "expense", onCashflowAdded }: 
               </SelectContent>
             </Select>
           </div>
-          
+
+          {type === "expense" && (
+            <div className="space-y-2">
+              <Label>Bucket (50/30/20)</Label>
+              <div
+                className="inline-flex w-full items-center gap-1 rounded-full border border-border/60 bg-muted/30 p-0.5"
+                role="radiogroup"
+                aria-label="Expense bucket"
+              >
+                {(["needs", "wants"] as const).map(b => {
+                  const active = bucket === b;
+                  return (
+                    <button
+                      key={b}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setBucket(b)}
+                      className={
+                        "flex-1 rounded-full px-3 py-1 text-xs capitalize transition-colors " +
+                        (active
+                          ? "bg-foreground text-background"
+                          : "text-muted-foreground hover:text-foreground")
+                      }
+                      data-testid={`button-add-bucket-${b}`}
+                    >
+                      {b === "needs" ? "Need" : "Want"}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                {bucket === "needs"
+                  ? "Essentials: rent, food, utilities, insurance, minimum debt payments."
+                  : "Lifestyle: dining out, subscriptions, entertainment, hobbies."}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <Label>Name</Label>
-            <Input 
-              placeholder={type === "income" ? "e.g. Salary" : "e.g. Rent"} 
+            <Input
+              placeholder={type === "income" ? "e.g. Salary" : "e.g. Rent"}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              data-testid="input-cashflow-name"
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label>Monthly Amount</Label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-muted-foreground">{getCurrencySymbol(currency)}</span>
-              <Input 
-                type="number" 
-                placeholder="0.00" 
+              <Input
+                type="number"
+                placeholder="0.00"
                 className="pl-7"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
+                data-testid="input-cashflow-amount"
               />
             </div>
           </div>
-          
-          <Button 
-            type="submit" 
+
+          <Button
+            type="submit"
             className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
             disabled={createCashflow.isPending}
+            data-testid="button-submit-cashflow"
           >
             {createCashflow.isPending ? "Adding..." : "Add Item"}
           </Button>

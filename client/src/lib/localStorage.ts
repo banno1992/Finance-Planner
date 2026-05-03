@@ -26,6 +26,8 @@ export interface Cashflow {
   name: string;
   amount: string;
   type: 'income' | 'expense';
+  // 50/30/20 budget bucket — only meaningful for expenses. Null for income.
+  bucket?: 'needs' | 'wants' | null;
 }
 
 export interface StudentLoan {
@@ -235,13 +237,19 @@ export const localDB = {
   },
 
   getCashflows(): Cashflow[] {
-    return getData().cashflows;
+    // Backfill missing bucket on legacy expenses so the 50/30/20 budget keeps
+    // working without forcing a manual migration.
+    return getData().cashflows.map(c => ({
+      ...c,
+      bucket: c.type === 'expense' ? (c.bucket ?? 'needs') : null,
+    }));
   },
 
   createCashflow(cashflow: Omit<Cashflow, 'id'>): Cashflow {
     const data = getData();
     const newCashflow: Cashflow = {
       ...cashflow,
+      bucket: cashflow.type === 'expense' ? (cashflow.bucket ?? 'needs') : null,
       id: data.nextIds.cashflow++,
     };
     data.cashflows.push(newCashflow);
