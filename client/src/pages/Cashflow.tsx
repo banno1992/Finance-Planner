@@ -15,16 +15,26 @@ interface EditValues {
   bucket: Bucket;
 }
 
-const BUDGET_TARGETS: { key: "needs" | "wants" | "savings"; label: string; pct: number; description: string }[] = [
-  { key: "needs", label: "Needs", pct: 0.5, description: "Rent, food, utilities, insurance, minimum debt payments" },
-  { key: "wants", label: "Wants", pct: 0.3, description: "Dining out, subscriptions, entertainment, hobbies" },
-  { key: "savings", label: "Savings", pct: 0.2, description: "What's left over after needs and wants" },
-];
+const BUDGET_DESCRIPTIONS: Record<"needs" | "wants" | "savings", { label: string; description: string }> = {
+  needs: { label: "Needs", description: "Rent, food, utilities, insurance, minimum debt payments" },
+  wants: { label: "Wants", description: "Dining out, subscriptions, entertainment, hobbies" },
+  savings: { label: "Savings", description: "What's left over after needs and wants" },
+};
 
 export default function Cashflow() {
   const [cashflows, setCashflows] = useState<CashflowType[]>([]);
   const { data: settings } = useSettings();
   const currency = settings?.currency || "USD";
+
+  const needsPct = (settings?.budgetNeedsPct ?? 50) / 100;
+  const wantsPct = (settings?.budgetWantsPct ?? 30) / 100;
+  const savingsPct = (settings?.budgetSavingsPct ?? 20) / 100;
+  const budgetTargets = useMemo(() => ([
+    { key: "needs" as const, pct: needsPct, ...BUDGET_DESCRIPTIONS.needs },
+    { key: "wants" as const, pct: wantsPct, ...BUDGET_DESCRIPTIONS.wants },
+    { key: "savings" as const, pct: savingsPct, ...BUDGET_DESCRIPTIONS.savings },
+  ]), [needsPct, wantsPct, savingsPct]);
+  const frameworkLabel = `${Math.round(needsPct * 100)}/${Math.round(wantsPct * 100)}/${Math.round(savingsPct * 100)}`;
 
   const refreshCashflows = useCallback(() => {
     setCashflows(localDB.getCashflows());
@@ -75,16 +85,19 @@ export default function Cashflow() {
 
   const verdict = useMemo(() => {
     if (totalIncome <= 0) return null;
-    const overNeeds = budget.pctNeeds > 50;
-    const overWants = budget.pctWants > 30;
-    const underSavings = budget.pctSavings < 20;
+    const needsTargetPct = needsPct * 100;
+    const wantsTargetPct = wantsPct * 100;
+    const savingsTargetPct = savingsPct * 100;
+    const overNeeds = budget.pctNeeds > needsTargetPct;
+    const overWants = budget.pctWants > wantsTargetPct;
+    const underSavings = budget.pctSavings < savingsTargetPct;
     if (budget.savings < 0) return { tone: "negative" as const, text: "You're spending more than you earn." };
     if (overNeeds && overWants) return { tone: "negative" as const, text: "Overspending on both needs and wants." };
     if (overNeeds) return { tone: "negative" as const, text: "Needs are over budget." };
     if (overWants) return { tone: "negative" as const, text: "Wants are over budget." };
-    if (underSavings) return { tone: "warning" as const, text: "Saving less than the 20% target." };
-    return { tone: "positive" as const, text: "On track with the 50/30/20 framework." };
-  }, [budget, totalIncome]);
+    if (underSavings) return { tone: "warning" as const, text: `Saving less than the ${Math.round(savingsTargetPct)}% target.` };
+    return { tone: "positive" as const, text: `On track with the ${frameworkLabel} framework.` };
+  }, [budget, totalIncome, needsPct, wantsPct, savingsPct, frameworkLabel]);
 
   const handleEdit = (item: CashflowType) => {
     setEditingId(item.id);
@@ -312,7 +325,7 @@ export default function Cashflow() {
               <PiggyBank size={20} />
             </div>
             <div>
-              <h3 className="font-serif text-lg font-light tracking-tight">Budget — 50/30/20</h3>
+              <h3 className="font-serif text-lg font-light tracking-tight" data-testid="text-budget-title">Budget — {frameworkLabel}</h3>
               <p className="text-xs text-muted-foreground">Needs, wants, savings against the framework</p>
             </div>
           </div>
@@ -335,7 +348,7 @@ export default function Cashflow() {
 
         {totalIncome <= 0 ? (
           <div className="text-center py-10 text-sm text-muted-foreground">
-            Add at least one income source above to see your 50/30/20 breakdown.
+            Add at least one income source above to see your {frameworkLabel} breakdown.
           </div>
         ) : (
           <>
@@ -354,7 +367,7 @@ export default function Cashflow() {
             </p>
 
             <div className="space-y-3">
-              {BUDGET_TARGETS.map(t => {
+              {budgetTargets.map(t => {
                 const target = totalIncome * t.pct;
                 const actual = t.key === "needs" ? budget.needs : t.key === "wants" ? budget.wants : budget.savings;
                 const actualPct = t.key === "needs" ? budget.pctNeeds : t.key === "wants" ? budget.pctWants : budget.pctSavings;

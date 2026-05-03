@@ -24,6 +24,59 @@ export default function Settings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [newCatName, setNewCatName] = useState("");
+  const [budgetPcts, setBudgetPcts] = useState({ needs: "50", wants: "30", savings: "20" });
+  const [budgetDirty, setBudgetDirty] = useState(false);
+
+  useEffect(() => {
+    if (settings && !budgetDirty) {
+      setBudgetPcts({
+        needs: String(settings.budgetNeedsPct ?? 50),
+        wants: String(settings.budgetWantsPct ?? 30),
+        savings: String(settings.budgetSavingsPct ?? 20),
+      });
+    }
+  }, [settings, budgetDirty]);
+
+  const budgetNums = {
+    needs: Number(budgetPcts.needs),
+    wants: Number(budgetPcts.wants),
+    savings: Number(budgetPcts.savings),
+  };
+  const budgetSum = budgetNums.needs + budgetNums.wants + budgetNums.savings;
+  const budgetValid =
+    Number.isFinite(budgetNums.needs) && budgetNums.needs >= 0 &&
+    Number.isFinite(budgetNums.wants) && budgetNums.wants >= 0 &&
+    Number.isFinite(budgetNums.savings) && budgetNums.savings >= 0 &&
+    Math.round(budgetSum * 100) === 10000;
+
+  const handleSaveBudget = () => {
+    if (!budgetValid) {
+      toast({
+        title: "Percentages must total 100",
+        description: `Currently they total ${budgetSum}%.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    updateSettings.mutate(
+      {
+        budgetNeedsPct: budgetNums.needs,
+        budgetWantsPct: budgetNums.wants,
+        budgetSavingsPct: budgetNums.savings,
+      },
+      {
+        onSuccess: () => {
+          setBudgetDirty(false);
+          toast({ title: "Budget framework updated", description: `${budgetNums.needs}/${budgetNums.wants}/${budgetNums.savings} saved.` });
+        },
+      }
+    );
+  };
+
+  const handleResetBudget = () => {
+    setBudgetPcts({ needs: "50", wants: "30", savings: "20" });
+    setBudgetDirty(true);
+  };
   const [draggedId, setDraggedId] = useState<number | null>(null);
   const [editingCatId, setEditingCatId] = useState<number | null>(null);
   const [editingCatName, setEditingCatName] = useState("");
@@ -157,7 +210,7 @@ export default function Settings() {
             <p className="text-sm text-muted-foreground mb-4">
               Select your preferred currency for display.
             </p>
-            <Select value={settings?.currency || "USD"} onValueChange={(val) => updateSettings.mutate(val)}>
+            <Select value={settings?.currency || "USD"} onValueChange={(val) => updateSettings.mutate({ currency: val })}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -167,6 +220,73 @@ export default function Settings() {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Budget Framework */}
+          <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm" data-testid="section-budget-framework">
+            <div className="flex items-center justify-between mb-4 gap-2">
+              <h3 className="font-serif text-xl font-light tracking-tight">Budget Framework</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground"
+                onClick={handleResetBudget}
+                data-testid="button-reset-budget"
+              >
+                Reset to 50/30/20
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Customise the target split for needs, wants and savings. They must add up to 100%.
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                { key: "needs" as const, label: "Needs" },
+                { key: "wants" as const, label: "Wants" },
+                { key: "savings" as const, label: "Savings" },
+              ]).map(f => (
+                <div key={f.key} className="space-y-1.5">
+                  <Label htmlFor={`budget-${f.key}`} className="text-xs uppercase tracking-[0.12em] text-muted-foreground">{f.label}</Label>
+                  <div className="relative">
+                    <Input
+                      id={`budget-${f.key}`}
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={100}
+                      step={1}
+                      value={budgetPcts[f.key]}
+                      onChange={(e) => {
+                        setBudgetDirty(true);
+                        setBudgetPcts(prev => ({ ...prev, [f.key]: e.target.value }));
+                      }}
+                      className="bg-background pr-7 tabular-nums"
+                      data-testid={`input-budget-${f.key}`}
+                    />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex items-center justify-between mt-4 gap-3">
+              <span
+                className={
+                  "text-xs tabular-nums " +
+                  (budgetValid ? "text-muted-foreground" : "text-[hsl(var(--chart-negative))]")
+                }
+                data-testid="text-budget-sum"
+              >
+                Total: {Number.isFinite(budgetSum) ? budgetSum : 0}% {budgetValid ? "" : "(must equal 100%)"}
+              </span>
+              <Button
+                size="sm"
+                onClick={handleSaveBudget}
+                disabled={!budgetValid || !budgetDirty || updateSettings.isPending}
+                data-testid="button-save-budget"
+              >
+                Save
+              </Button>
+            </div>
           </div>
 
           {/* Categories Section */}

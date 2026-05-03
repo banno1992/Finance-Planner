@@ -158,8 +158,8 @@ export function useSettings() {
 export function useUpdateSettings() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (currency: string) => {
-      return Promise.resolve(localDB.updateSettings(currency));
+    mutationFn: (updates: Partial<import("@/lib/localStorage").Settings>) => {
+      return Promise.resolve(localDB.updateSettings(updates));
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.settings, refetchType: 'all' }),
   });

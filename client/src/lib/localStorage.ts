@@ -67,7 +67,16 @@ export interface Pension {
 
 export interface Settings {
   currency: string;
+  budgetNeedsPct: number;
+  budgetWantsPct: number;
+  budgetSavingsPct: number;
 }
+
+export const DEFAULT_BUDGET_PCTS = {
+  budgetNeedsPct: 50,
+  budgetWantsPct: 30,
+  budgetSavingsPct: 20,
+} as const;
 
 export interface StorageData {
   categories: Category[];
@@ -95,7 +104,7 @@ const defaultData: StorageData = {
   studentLoans: [],
   mortgages: [],
   pensions: [],
-  settings: { currency: 'GBP' },
+  settings: { currency: 'GBP', ...DEFAULT_BUDGET_PCTS },
   nextIds: {
     category: 1,
     snapshot: 1,
@@ -363,12 +372,20 @@ export const localDB = {
   },
 
   getSettings(): Settings {
-    return getData().settings;
+    const s = getData().settings;
+    // Backfill budget percentages on legacy data so existing users keep the
+    // 50/30/20 defaults until they tweak them in Settings.
+    return {
+      currency: s.currency ?? 'GBP',
+      budgetNeedsPct: s.budgetNeedsPct ?? DEFAULT_BUDGET_PCTS.budgetNeedsPct,
+      budgetWantsPct: s.budgetWantsPct ?? DEFAULT_BUDGET_PCTS.budgetWantsPct,
+      budgetSavingsPct: s.budgetSavingsPct ?? DEFAULT_BUDGET_PCTS.budgetSavingsPct,
+    };
   },
 
-  updateSettings(currency: string): Settings {
+  updateSettings(updates: Partial<Settings>): Settings {
     const data = getData();
-    data.settings.currency = currency;
+    data.settings = { ...data.settings, ...updates };
     saveData(data);
     return data.settings;
   },
