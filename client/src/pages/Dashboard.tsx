@@ -10,8 +10,9 @@ import {
 } from "recharts";
 import { format, addMonths, parseISO } from "date-fns";
 import {
-  Loader2, ChevronDown, ChevronRight, Check, PlusCircle,
+  Loader2, ChevronDown, ChevronRight, Check, PlusCircle, ArrowUpRight,
 } from "lucide-react";
+import { Link } from "wouter";
 
 const ACCENT = "hsl(var(--chart-accent))";
 const POSITIVE = "hsl(var(--chart-positive))";
@@ -178,6 +179,31 @@ export default function Dashboard() {
   const monthlyExpenses = cashflows?.filter(c => c.type === "expense").reduce((s, c) => s + Number(c.amount), 0) || 0;
   const monthlySurplus = monthlyIncome - monthlyExpenses;
   const savingsRate = monthlyIncome > 0 ? (monthlySurplus / monthlyIncome) * 100 : 0;
+
+  // 50/30/20 verdict — mirrors the calculation on the Cashflow page so the
+  // Dashboard pulse matches what users see when they drill in.
+  const budgetVerdict = useMemo(() => {
+    if (monthlyIncome <= 0) return null;
+    const needs = (cashflows || [])
+      .filter(c => c.type === "expense" && (c.bucket ?? "needs") === "needs")
+      .reduce((s, c) => s + Number(c.amount), 0);
+    const wants = (cashflows || [])
+      .filter(c => c.type === "expense" && c.bucket === "wants")
+      .reduce((s, c) => s + Number(c.amount), 0);
+    const savings = monthlyIncome - needs - wants;
+    const pctNeeds = (needs / monthlyIncome) * 100;
+    const pctWants = (wants / monthlyIncome) * 100;
+    const pctSavings = (savings / monthlyIncome) * 100;
+    const overNeeds = pctNeeds > 50;
+    const overWants = pctWants > 30;
+    const underSavings = pctSavings < 20;
+    if (savings < 0) return { tone: "negative" as const, text: "Spending more than you earn" };
+    if (overNeeds && overWants) return { tone: "negative" as const, text: "Needs & wants over budget" };
+    if (overNeeds) return { tone: "negative" as const, text: "Needs over budget" };
+    if (overWants) return { tone: "negative" as const, text: "Wants over budget" };
+    if (underSavings) return { tone: "warning" as const, text: "Below 20% savings target" };
+    return { tone: "positive" as const, text: "On track with 50/30/20" };
+  }, [cashflows, monthlyIncome]);
 
   // Chart data: historical + (optional) projections (calm dashed lines).
   const historicalSeries = sortedSnapshots.map(s => ({
@@ -508,31 +534,57 @@ export default function Dashboard() {
         Add a wealth snapshot
       </button>
 
-      {/* This Month Strip */}
-      <section className="grid grid-cols-3 gap-3 sm:gap-6 border-y border-border py-8 text-center sm:text-left">
-        <div>
-          <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Income</p>
-          <p className="font-mono text-base sm:text-xl tabular-nums text-foreground break-words" data-testid="text-monthly-income">
-            {formatCurrency(monthlyIncome, currency)}
-          </p>
-        </div>
-        <div>
-          <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Expenses</p>
-          <p className="font-mono text-base sm:text-xl tabular-nums text-foreground break-words" data-testid="text-monthly-expenses">
-            {formatCurrency(monthlyExpenses, currency)}
-          </p>
-        </div>
-        <div>
-          <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Surplus</p>
-          <p
-            className="font-mono text-base sm:text-xl tabular-nums break-words"
-            style={{ color: monthlySurplus >= 0 ? POSITIVE : NEGATIVE }}
-            data-testid="text-monthly-surplus"
-          >
-            {formatCurrency(monthlySurplus, currency)}
-          </p>
-        </div>
-      </section>
+      {/* This Month Strip — click-through to Cashflow */}
+      <Link href="/cashflow" data-testid="link-cashflow-strip">
+        <section className="group grid grid-cols-3 gap-3 sm:gap-6 border-y border-border py-8 text-center sm:text-left cursor-pointer hover:bg-muted/20 transition-colors -mx-2 px-2 rounded-md">
+          <div>
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Income</p>
+            <p className="font-mono text-base sm:text-xl tabular-nums text-foreground break-words" data-testid="text-monthly-income">
+              {formatCurrency(monthlyIncome, currency)}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground mb-2">Expenses</p>
+            <p className="font-mono text-base sm:text-xl tabular-nums text-foreground break-words" data-testid="text-monthly-expenses">
+              {formatCurrency(monthlyExpenses, currency)}
+            </p>
+          </div>
+          <div>
+            <div className="flex items-center justify-center sm:justify-start gap-1.5 mb-2">
+              <p className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                {monthlySurplus >= 0 ? "Surplus" : "Deficit"}
+              </p>
+              <ArrowUpRight
+                size={12}
+                className="text-muted-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-hidden
+              />
+            </div>
+            <p
+              className="font-mono text-base sm:text-xl tabular-nums break-words"
+              style={{ color: monthlySurplus >= 0 ? POSITIVE : NEGATIVE }}
+              data-testid="text-monthly-surplus"
+            >
+              {formatCurrency(monthlySurplus, currency)}
+            </p>
+            {budgetVerdict && (
+              <span
+                className={
+                  "mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide " +
+                  (budgetVerdict.tone === "positive"
+                    ? "bg-[hsl(var(--chart-positive))]/15 text-[hsl(var(--chart-positive))]"
+                    : budgetVerdict.tone === "warning"
+                    ? "bg-[hsl(var(--chart-accent))]/15 text-[hsl(var(--chart-accent))]"
+                    : "bg-[hsl(var(--chart-negative))]/15 text-[hsl(var(--chart-negative))]")
+                }
+                data-testid="text-budget-verdict-dashboard"
+              >
+                {budgetVerdict.text}
+              </span>
+            )}
+          </div>
+        </section>
+      </Link>
 
       {/* Savings Rate — mobile only (sits under the income / expenses / surplus strip) */}
       <section className="lg:hidden -mt-4 flex items-center justify-between gap-4 rounded-2xl border border-border/60 bg-muted/40 px-4 py-3">
