@@ -34,6 +34,60 @@ interface PreviewRow {
 // user can re-tick the include checkbox if it was a false positive.
 const TOTAL_RE = /^\s*(monthly\s+total|grand\s+total|sub\s*total|monthly|totals?|sum)\b/i;
 
+// Case-insensitive substring keywords used to pre-suggest the bucket for a
+// pasted row. Wants are checked first so that something like "Amazon Prime"
+// wins over a generic "amazon" need keyword.
+const WANT_KEYWORDS = [
+  // Streaming & entertainment subscriptions
+  "netflix", "spotify", "disney", "hulu", "hbo", "max ",
+  "apple tv", "apple music", "youtube premium", "youtube music",
+  "paramount", "peacock", "audible", "kindle unlimited",
+  "amazon prime", "prime video", "prime music",
+  "playstation", "xbox", "nintendo", "steam ", "twitch", "patreon",
+  // Fitness / lifestyle memberships
+  "gym", "fitness", "peloton", "yoga", "pilates", "crossfit", "classpass",
+  // Gambling
+  "lottery", "lotto", "betting", "casino",
+  // Eating out / takeaway
+  "uber eats", "doordash", "grubhub", "deliveroo", "just eat", "takeaway",
+  "starbucks", "costa", "pret", "restaurant", "dining", "cafe",
+  // Going out
+  "cinema", "movies", "concert", "ticketmaster",
+];
+
+const NEED_KEYWORDS = [
+  // Housing
+  "rent", "mortgage", "council tax", "property tax", "service charge",
+  "ground rent", "hoa",
+  // Utilities
+  "water", "gas", "electric", "electricity", "heating", "utility", "utilities",
+  "internet", "broadband", "wifi", "phone bill", "mobile bill",
+  // Insurance
+  "insurance",
+  // Groceries & essentials
+  "groceries", "supermarket", "tesco", "sainsbury", "aldi", "lidl",
+  "asda", "morrisons", "waitrose", "whole foods", "trader joe",
+  // Family / health
+  "childcare", "nursery", "school fees", "tuition",
+  "doctor", "dentist", "pharmacy", "prescription", "medical",
+  // Transport essentials
+  "fuel", "petrol", "gasoline", "diesel", "bus pass", "train pass",
+  "season ticket", "metro pass",
+  // Debt servicing
+  "loan", "student loan", "credit card payment",
+];
+
+export function suggestBucket(name: string): Bucket {
+  const n = name.toLowerCase();
+  for (const k of WANT_KEYWORDS) {
+    if (n.includes(k)) return "wants";
+  }
+  for (const k of NEED_KEYWORDS) {
+    if (n.includes(k)) return "needs";
+  }
+  return "needs";
+}
+
 // Split a line into [name, amountText]. Tab takes priority. Otherwise we walk
 // backwards and pull the trailing token that looks like a number/currency
 // blob, treating everything before it as the name.
@@ -106,7 +160,8 @@ export function BulkImportExpenses({ onImported }: { onImported?: () => void }) 
       id: p.id,
       name: p.name,
       amount: p.hasAmount ? String(p.amount) : "",
-      bucket: "needs" as Bucket,
+      // Pre-suggest the bucket from the name; user can override per row.
+      bucket: suggestBucket(p.name),
       // Don't auto-include totals or rows missing an amount.
       include: p.hasAmount && !p.isTotal,
       hasAmount: p.hasAmount,
