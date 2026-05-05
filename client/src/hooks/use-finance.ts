@@ -21,7 +21,7 @@ export function useCategories() {
 export function useCreateCategory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: Omit<Category, "id">) => {
+    mutationFn: (data: { name: string; description?: string | null; displayOrder?: number }) => {
       return Promise.resolve(localDB.createCategory(data));
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.categories, refetchType: 'all' }),

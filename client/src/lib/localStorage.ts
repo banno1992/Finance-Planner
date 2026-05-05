@@ -137,12 +137,13 @@ export const localDB = {
     return getData().categories.sort((a, b) => a.displayOrder - b.displayOrder);
   },
 
-  createCategory(category: Omit<Category, 'id'>): Category {
+  createCategory(category: { name: string; description?: string | null; displayOrder?: number }): Category {
     const data = getData();
     const newCategory: Category = {
+      description: null,
+      displayOrder: data.categories.length,
       ...category,
       id: data.nextIds.category++,
-      displayOrder: category.displayOrder ?? data.categories.length,
     };
     data.categories.push(newCategory);
     saveData(data);
