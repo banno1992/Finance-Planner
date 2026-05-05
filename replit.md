@@ -49,10 +49,18 @@ Data storage preference: Browser LocalStorage (private, no database costs)
 │       ├── hooks/       # Custom hooks (use-finance.ts for data operations)
 │       ├── pages/       # Route pages
 │       └── lib/         # Utilities (localStorage.ts for data storage)
-├── server/           # Express backend (serves static files only)
-│   └── index.ts      # Server entry point
-└── shared/           # Shared types
+└── server/           # Express server
+    ├── index.ts         # Boots Express, serves static frontend in prod or
+    │                    # mounts Vite dev middleware in dev. No /api routes.
+    ├── static.ts        # Production static file handler
+    └── vite.ts          # Dev-mode Vite middleware
 ```
+
+There is no database. The previous Postgres/Drizzle scaffolding (server/db.ts,
+server/storage.ts, server/routes.ts, shared/schema.ts, shared/routes.ts,
+drizzle.config.ts) was removed in Task #11 because all data lives in the
+browser via `client/src/lib/localStorage.ts`. Do not reintroduce a database
+unless explicitly asked.
 
 ### Data Flow Pattern
 All data operations go through `client/src/lib/localStorage.ts` which provides a simple API for CRUD operations. React Query hooks in `use-finance.ts` wrap these operations for cache management and reactivity.
