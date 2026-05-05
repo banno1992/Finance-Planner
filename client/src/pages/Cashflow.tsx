@@ -16,7 +16,7 @@ const SORT_OPTIONS: Array<{ value: CashflowSortMode; label: string }> = [
   { value: "amount", label: "Amount" },
 ];
 
-function sortCashflows(items: CashflowType[], mode: CashflowSortMode): CashflowType[] {
+function applySortMode(items: CashflowType[], mode: CashflowSortMode): CashflowType[] {
   const next = [...items];
   if (mode === "amount") {
     next.sort((a, b) => Number(b.amount) - Number(a.amount));
@@ -26,6 +26,13 @@ function sortCashflows(items: CashflowType[], mode: CashflowSortMode): CashflowT
     next.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   }
   return next;
+}
+
+function sortCashflows(items: CashflowType[], mode: CashflowSortMode, bucketGroup = false): CashflowType[] {
+  if (!bucketGroup) return applySortMode(items, mode);
+  const needs = applySortMode(items.filter(c => (c.bucket ?? "needs") !== "wants"), mode);
+  const wants = applySortMode(items.filter(c => c.bucket === "wants"), mode);
+  return [...needs, ...wants];
 }
 
 interface EditValues {
@@ -44,17 +51,35 @@ function SortPillsRow({
   value,
   onChange,
   idPrefix,
+  groupToggle,
 }: {
   value: CashflowSortMode;
   onChange: (m: CashflowSortMode) => void;
   idPrefix: string;
+  groupToggle?: { active: boolean; onToggle: () => void };
 }) {
   return (
-    <div
-      className="flex items-center justify-end gap-1 -mb-1"
-      role="radiogroup"
-      aria-label="Sort order"
-    >
+    <div className="flex items-center justify-end gap-1 -mb-1 flex-wrap">
+      {groupToggle && (
+        <>
+          <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mr-0.5">Group</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={groupToggle.active}
+            onClick={groupToggle.onToggle}
+            className={
+              "rounded-full px-2.5 py-1 text-[11px] tracking-wide transition-colors mr-2 " +
+              (groupToggle.active
+                ? "bg-foreground text-background"
+                : "bg-muted/50 text-muted-foreground hover:text-foreground border border-border/40")
+            }
+            data-testid={`button-${idPrefix}-group-toggle`}
+          >
+            N / W
+          </button>
+        </>
+      )}
       <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mr-1">Sort</span>
       {SORT_OPTIONS.map(opt => {
         const active = value === opt.value;
@@ -135,6 +160,7 @@ export default function Cashflow() {
 
   const incomeSortMode: CashflowSortMode = settings?.incomeSortMode ?? "custom";
   const expenseSortMode: CashflowSortMode = settings?.expenseSortMode ?? "custom";
+  const expenseBucketGroup = settings?.expenseBucketGroup ?? false;
 
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [dragOverId, setDragOverId] = useState<number | null>(null);
@@ -175,8 +201,8 @@ export default function Cashflow() {
     [cashflows, incomeSortMode]
   );
   const expenseItems = useMemo(
-    () => sortCashflows(cashflows.filter(c => c.type === 'expense'), expenseSortMode),
-    [cashflows, expenseSortMode]
+    () => sortCashflows(cashflows.filter(c => c.type === 'expense'), expenseSortMode, expenseBucketGroup),
+    [cashflows, expenseSortMode, expenseBucketGroup]
   );
 
   const totalIncome = incomeItems.reduce((acc, curr) => acc + Number(curr.amount), 0);
@@ -439,20 +465,38 @@ export default function Cashflow() {
               value={expenseSortMode}
               onChange={(m) => setSortMode("expense", m)}
               idPrefix="expense"
+              groupToggle={{
+                active: expenseBucketGroup,
+                onToggle: () => updateSettings.mutate({ expenseBucketGroup: !expenseBucketGroup }),
+              }}
             />
             {expenseItems.map((item, idx) => {
               const itemBucket = (item.bucket ?? "needs") as Bucket;
               const isCustom = expenseSortMode === "custom";
               const isEditing = editingId === item.id;
-              const showHandle = isCustom && !isEditing;
+              const showHandle = isCustom && !isEditing && !expenseBucketGroup;
               const isDraggable = showHandle;
+
+              const prevBucket = idx > 0 ? (expenseItems[idx - 1].bucket ?? "needs") : null;
+              const showNeedsDivider = expenseBucketGroup && idx === 0 && itemBucket !== "wants";
+              const showWantsDivider = expenseBucketGroup && itemBucket === "wants" && prevBucket !== "wants";
               const isFirst = idx === 0;
               const isLast = idx === expenseItems.length - 1;
               const isDragOver = showHandle && dragOverId === item.id && draggingId !== null && draggingId !== item.id;
               const isBeingDragged = draggingId === item.id;
               return (
+                <div key={item.id}>
+                  {showNeedsDivider && (
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 px-1 pb-1 pt-0.5" data-testid="label-group-needs">
+                      Needs
+                    </p>
+                  )}
+                  {showWantsDivider && (
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70 px-1 pb-1 pt-2" data-testid="label-group-wants">
+                      Wants
+                    </p>
+                  )}
                 <div
-                  key={item.id}
                   draggable={isDraggable}
                   onDragStart={isDraggable ? handleDragStart(item.id) : undefined}
                   onDragOver={isDraggable ? handleDragOver(item.id) : undefined}
@@ -556,6 +600,7 @@ export default function Cashflow() {
                       </Button>
                     </>
                   )}
+                </div>
                 </div>
               );
             })}

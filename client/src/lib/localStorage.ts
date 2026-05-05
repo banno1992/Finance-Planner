@@ -77,6 +77,7 @@ export interface Settings {
   budgetSavingsPct: number;
   incomeSortMode?: CashflowSortMode;
   expenseSortMode?: CashflowSortMode;
+  expenseBucketGroup?: boolean;
 }
 
 export const DEFAULT_BUDGET_PCTS = {
@@ -430,6 +431,7 @@ export const localDB = {
       budgetSavingsPct: s.budgetSavingsPct ?? DEFAULT_BUDGET_PCTS.budgetSavingsPct,
       incomeSortMode: s.incomeSortMode ?? 'custom',
       expenseSortMode: s.expenseSortMode ?? 'custom',
+      expenseBucketGroup: s.expenseBucketGroup ?? false,
     };
   },
 
