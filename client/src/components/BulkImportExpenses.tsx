@@ -223,15 +223,15 @@ export function BulkImportExpenses({ onImported }: { onImported?: () => void }) 
   };
 
   return (
-    <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm" data-testid="section-bulk-import">
+    <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-4 sm:p-6 shadow-sm" data-testid="section-bulk-import">
       <div className="flex items-start justify-between gap-3 mb-4">
-        <div>
-          <h3 className="font-serif text-xl font-light tracking-tight">Bulk Import Expenses</h3>
+        <div className="min-w-0">
+          <h3 className="font-serif text-lg sm:text-xl font-light tracking-tight">Bulk Import Expenses</h3>
           <p className="text-sm text-muted-foreground mt-1">
             Paste a name + amount per line straight from your spreadsheet. Currency symbols and commas are stripped automatically; rows that look like totals are excluded by default.
           </p>
         </div>
-        <ClipboardPaste size={20} className="text-muted-foreground flex-shrink-0 mt-1" />
+        <ClipboardPaste size={20} className="text-muted-foreground flex-shrink-0 mt-1 hidden sm:block" />
       </div>
 
       <div className="space-y-2">
@@ -242,7 +242,7 @@ export function BulkImportExpenses({ onImported }: { onImported?: () => void }) 
           id="bulk-import-textarea"
           value={text}
           onChange={(e) => reparse(e.target.value)}
-          placeholder={`Rent\t£1,042.01\nGroceries\t£400.00\nNetflix\t£10.99`}
+          placeholder={`Rent\t1042.01\nGroceries\t400\nNetflix\t10.99`}
           className="min-h-[140px] font-mono text-xs bg-background tabular-nums"
           data-testid="textarea-bulk-import"
         />
@@ -266,86 +266,98 @@ export function BulkImportExpenses({ onImported }: { onImported?: () => void }) 
                   <li
                     key={r.id}
                     className={
-                      "grid grid-cols-[28px_minmax(0,1fr)_120px_140px_28px] gap-3 px-3 py-2 items-center " +
+                      "px-3 py-3 space-y-2 sm:space-y-0 sm:py-2 " +
+                      "sm:grid sm:grid-cols-[28px_minmax(0,1fr)_120px_140px_28px] sm:gap-3 sm:items-center " +
                       (dimmed ? "opacity-60" : "")
                     }
                     data-testid={`row-import-${r.id}`}
                   >
-                    <Checkbox
-                      checked={r.include}
-                      disabled={noAmount}
-                      onCheckedChange={(v) => updateRow(r.id, { include: v === true })}
-                      aria-label={`Include ${r.name}`}
-                      data-testid={`checkbox-import-${r.id}`}
-                    />
-                    <div className="min-w-0">
-                      <Input
-                        value={r.name}
-                        onChange={(e) => updateRow(r.id, { name: e.target.value })}
-                        className="h-8 text-sm bg-background"
-                        data-testid={`input-import-name-${r.id}`}
+                    {/* Top sub-row on mobile (checkbox + name + delete);
+                        becomes three independent grid items on sm+. */}
+                    <div className="flex items-center gap-2 sm:contents">
+                      <Checkbox
+                        checked={r.include}
+                        disabled={noAmount}
+                        onCheckedChange={(v) => updateRow(r.id, { include: v === true })}
+                        aria-label={`Include ${r.name}`}
+                        className="flex-shrink-0 sm:col-start-1"
+                        data-testid={`checkbox-import-${r.id}`}
                       />
-                      {(r.isTotal || noAmount) && (
-                        <p className="text-[10px] text-muted-foreground mt-1">
-                          {noAmount ? "Skipped — no amount detected" : "Likely a totals row"}
-                        </p>
-                      )}
+                      <div className="flex-1 min-w-0 sm:col-start-2">
+                        <Input
+                          value={r.name}
+                          onChange={(e) => updateRow(r.id, { name: e.target.value })}
+                          className="h-9 sm:h-8 text-sm bg-background"
+                          data-testid={`input-import-name-${r.id}`}
+                        />
+                        {(r.isTotal || noAmount) && (
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            {noAmount ? "Skipped — no amount detected" : "Likely a totals row"}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 sm:h-7 sm:w-7 flex-shrink-0 text-muted-foreground hover:text-[hsl(var(--chart-negative))] sm:col-start-5"
+                        onClick={() => removeRow(r.id)}
+                        aria-label={`Remove ${r.name} from import`}
+                        data-testid={`button-import-remove-${r.id}`}
+                      >
+                        <Trash2 size={14} />
+                      </Button>
                     </div>
-                    <div className="relative">
-                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
-                      <Input
-                        type="number"
-                        value={r.amount}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          const n = Number(v);
-                          updateRow(r.id, {
-                            amount: v,
-                            hasAmount: Number.isFinite(n) && n > 0,
-                          });
-                        }}
-                        className="h-8 text-sm pl-5 bg-background tabular-nums"
-                        placeholder="0.00"
-                        data-testid={`input-import-amount-${r.id}`}
-                      />
+
+                    {/* Bottom sub-row on mobile (amount + bucket), indented
+                        under the name. Becomes two grid items on sm+. */}
+                    <div className="flex items-center gap-2 pl-8 sm:pl-0 sm:contents">
+                      <div className="relative flex-1 sm:flex-initial sm:col-start-3">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          value={r.amount}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            const n = Number(v);
+                            updateRow(r.id, {
+                              amount: v,
+                              hasAmount: Number.isFinite(n) && n > 0,
+                            });
+                          }}
+                          className="h-9 sm:h-8 text-sm pl-5 bg-background tabular-nums"
+                          placeholder="0.00"
+                          data-testid={`input-import-amount-${r.id}`}
+                        />
+                      </div>
+                      <div
+                        className="inline-flex items-center gap-0.5 rounded-full border border-border/60 bg-background/80 p-0.5 flex-shrink-0 sm:col-start-4"
+                        role="radiogroup"
+                        aria-label={`Bucket for ${r.name}`}
+                      >
+                        {(["needs", "wants"] as const).map(b => {
+                          const active = r.bucket === b;
+                          return (
+                            <button
+                              key={b}
+                              type="button"
+                              role="radio"
+                              aria-checked={active}
+                              onClick={() => updateRow(r.id, { bucket: b })}
+                              className={
+                                "rounded-full px-3 py-1 sm:px-2.5 sm:py-0.5 text-[11px] capitalize transition-colors " +
+                                (active
+                                  ? "bg-foreground text-background"
+                                  : "text-muted-foreground hover:text-foreground")
+                              }
+                              data-testid={`button-import-bucket-${b}-${r.id}`}
+                            >
+                              {b === "needs" ? "Need" : "Want"}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                    <div
-                      className="inline-flex items-center gap-0.5 rounded-full border border-border/60 bg-background/80 p-0.5 w-fit"
-                      role="radiogroup"
-                      aria-label={`Bucket for ${r.name}`}
-                    >
-                      {(["needs", "wants"] as const).map(b => {
-                        const active = r.bucket === b;
-                        return (
-                          <button
-                            key={b}
-                            type="button"
-                            role="radio"
-                            aria-checked={active}
-                            onClick={() => updateRow(r.id, { bucket: b })}
-                            className={
-                              "rounded-full px-2.5 py-0.5 text-[11px] capitalize transition-colors " +
-                              (active
-                                ? "bg-foreground text-background"
-                                : "text-muted-foreground hover:text-foreground")
-                            }
-                            data-testid={`button-import-bucket-${b}-${r.id}`}
-                          >
-                            {b === "needs" ? "Need" : "Want"}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-[hsl(var(--chart-negative))]"
-                      onClick={() => removeRow(r.id)}
-                      aria-label={`Remove ${r.name} from import`}
-                      data-testid={`button-import-remove-${r.id}`}
-                    >
-                      <Trash2 size={13} />
-                    </Button>
                   </li>
                 );
               })}
@@ -356,12 +368,13 @@ export function BulkImportExpenses({ onImported }: { onImported?: () => void }) 
             <span className="text-xs text-muted-foreground tabular-nums" data-testid="text-import-summary">
               <span className="text-foreground font-medium">{selected.length}</span> {selected.length === 1 ? "row" : "rows"} selected · {formatCurrency(selectedTotal, currency)}/month
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:flex-initial">
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={clearAll}
                 disabled={submitting}
+                className="flex-1 sm:flex-initial"
                 data-testid="button-import-clear"
               >
                 Clear
@@ -370,7 +383,7 @@ export function BulkImportExpenses({ onImported }: { onImported?: () => void }) 
                 size="sm"
                 onClick={handleImport}
                 disabled={selected.length === 0 || submitting}
-                className="gap-2"
+                className="gap-2 flex-1 sm:flex-initial"
                 data-testid="button-import-confirm"
               >
                 <FileDown size={14} />
