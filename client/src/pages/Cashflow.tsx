@@ -153,29 +153,36 @@ export default function Cashflow() {
 
           <div className="space-y-2">
             {incomeItems.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 p-3 rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group">
+              <div
+                key={item.id}
+                className={
+                  "flex items-center gap-2 sm:gap-3 p-3 rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group " +
+                  (editingId === item.id ? "flex-wrap" : "")
+                }
+              >
                 {editingId === item.id ? (
                   <>
                     <Input
                       value={editValues.name}
                       onChange={(e) => setEditValues(prev => ({ ...prev, name: e.target.value }))}
-                      className="flex-1 h-8 text-sm bg-background/50"
+                      className="basis-full sm:basis-auto sm:flex-1 h-9 sm:h-8 text-sm bg-background/50"
                       placeholder="Name"
                     />
-                    <div className="relative">
-                      <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
+                    <div className="relative flex-1 sm:flex-none sm:w-auto">
+                      <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
                       <Input
                         type="number"
+                        inputMode="decimal"
                         value={editValues.amount}
                         onChange={(e) => setEditValues(prev => ({ ...prev, amount: e.target.value }))}
-                        className="w-24 h-8 text-sm pl-5 bg-background/50"
+                        className="w-full sm:w-24 h-9 sm:h-8 text-sm pl-5 bg-background/50 tabular-nums"
                         placeholder="0.00"
                       />
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--chart-positive))]" onClick={() => handleSave(item.id, "income")}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 text-[hsl(var(--chart-positive))]" onClick={() => handleSave(item.id, "income")}>
                       <Save size={14} />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleCancel}>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 text-muted-foreground" onClick={handleCancel}>
                       <X size={14} />
                     </Button>
                   </>
@@ -226,17 +233,23 @@ export default function Cashflow() {
             {expenseItems.map((item) => {
               const itemBucket = (item.bucket ?? "needs") as Bucket;
               return (
-                <div key={item.id} className="flex items-center gap-3 p-3 rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group">
+                <div
+                  key={item.id}
+                  className={
+                    "flex items-center gap-2 sm:gap-3 p-3 rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group " +
+                    (editingId === item.id ? "flex-wrap" : "")
+                  }
+                >
                   {editingId === item.id ? (
                     <>
                       <Input
                         value={editValues.name}
                         onChange={(e) => setEditValues(prev => ({ ...prev, name: e.target.value }))}
-                        className="flex-1 h-8 text-sm bg-background/50"
+                        className="basis-full sm:basis-auto sm:flex-1 h-9 sm:h-8 text-sm bg-background/50"
                         placeholder="Name"
                       />
                       <div
-                        className="inline-flex items-center gap-0.5 rounded-full border border-border/60 bg-background/50 p-0.5"
+                        className="inline-flex items-center gap-0.5 rounded-full border border-border/60 bg-background/50 p-0.5 flex-shrink-0"
                         role="radiogroup"
                         aria-label="Expense bucket"
                       >
@@ -250,7 +263,7 @@ export default function Cashflow() {
                               aria-checked={active}
                               onClick={() => setEditValues(prev => ({ ...prev, bucket: b }))}
                               className={
-                                "rounded-full px-2 py-0.5 text-[11px] capitalize transition-colors " +
+                                "rounded-full px-3 py-1 sm:px-2 sm:py-0.5 text-[11px] capitalize transition-colors " +
                                 (active
                                   ? "bg-foreground text-background"
                                   : "text-muted-foreground hover:text-foreground")
@@ -262,20 +275,21 @@ export default function Cashflow() {
                           );
                         })}
                       </div>
-                      <div className="relative">
-                        <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
+                      <div className="relative flex-1 sm:flex-none sm:w-auto">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
                         <Input
                           type="number"
+                          inputMode="decimal"
                           value={editValues.amount}
                           onChange={(e) => setEditValues(prev => ({ ...prev, amount: e.target.value }))}
-                          className="w-24 h-8 text-sm pl-5 bg-background/50"
+                          className="w-full sm:w-24 h-9 sm:h-8 text-sm pl-5 bg-background/50 tabular-nums"
                           placeholder="0.00"
                         />
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-[hsl(var(--chart-positive))]" onClick={() => handleSave(item.id, "expense")}>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 text-[hsl(var(--chart-positive))]" onClick={() => handleSave(item.id, "expense")}>
                         <Save size={14} />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleCancel}>
+                      <Button variant="ghost" size="icon" className="h-9 w-9 sm:h-8 sm:w-8 flex-shrink-0 text-muted-foreground" onClick={handleCancel}>
                         <X size={14} />
                       </Button>
                     </>
