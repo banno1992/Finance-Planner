@@ -108,6 +108,19 @@ export function useDeleteCashflow() {
   });
 }
 
+export function useReorderCashflows() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (order: Array<{ id: number; displayOrder: number }>) => {
+      return Promise.resolve(localDB.reorderCashflows(order));
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(QUERY_KEYS.cashflows, localDB.getCashflows());
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cashflows, refetchType: 'all' });
+    },
+  });
+}
+
 export function useSnapshots() {
   return useQuery({
     queryKey: QUERY_KEYS.snapshots,

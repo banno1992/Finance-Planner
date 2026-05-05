@@ -28,7 +28,12 @@ export interface Cashflow {
   type: 'income' | 'expense';
   // 50/30/20 budget bucket — only meaningful for expenses. Null for income.
   bucket?: 'needs' | 'wants' | null;
+  // Position within its type group when the user picks the "Custom" sort mode.
+  // Backfilled on read for legacy items.
+  displayOrder?: number;
 }
+
+export type CashflowSortMode = 'amount' | 'name' | 'custom';
 
 export interface StudentLoan {
   id: number;
@@ -70,6 +75,8 @@ export interface Settings {
   budgetNeedsPct: number;
   budgetWantsPct: number;
   budgetSavingsPct: number;
+  incomeSortMode?: CashflowSortMode;
+  expenseSortMode?: CashflowSortMode;
 }
 
 export const DEFAULT_BUDGET_PCTS = {
@@ -248,18 +255,47 @@ export const localDB = {
 
   getCashflows(): Cashflow[] {
     // Backfill missing bucket on legacy expenses so the 50/30/20 budget keeps
-    // working without forcing a manual migration.
-    return getData().cashflows.map(c => ({
-      ...c,
-      bucket: c.type === 'expense' ? (c.bucket ?? 'needs') : null,
-    }));
+    // working, and assign a stable displayOrder per type group for legacy
+    // items that pre-date custom ordering. Insertion order is the natural
+    // fallback so existing users see no visible change. The backfilled
+    // displayOrders are persisted once so subsequent createCashflow() calls
+    // can compute the correct max+1 even if no manual reorder has happened.
+    const data = getData();
+    const incomeCounter: { i: number } = { i: 0 };
+    const expenseCounter: { i: number } = { i: 0 };
+    let mutated = false;
+    data.cashflows.forEach(c => {
+      if (c.type === 'expense' && c.bucket == null) {
+        c.bucket = 'needs';
+        mutated = true;
+      }
+      if (typeof c.displayOrder !== 'number') {
+        c.displayOrder = c.type === 'income' ? incomeCounter.i++ : expenseCounter.i++;
+        mutated = true;
+      } else if (c.type === 'income') {
+        incomeCounter.i = Math.max(incomeCounter.i, c.displayOrder + 1);
+      } else {
+        expenseCounter.i = Math.max(expenseCounter.i, c.displayOrder + 1);
+      }
+    });
+    if (mutated) saveData(data);
+    return data.cashflows.map(c => ({ ...c }));
   },
 
   createCashflow(cashflow: Omit<Cashflow, 'id'>): Cashflow {
+    // Read via getCashflows() so any legacy items have been backfilled (and
+    // persisted) before we compute the next displayOrder. This guarantees
+    // appended items truly land at the end of their type group.
+    const existing = this.getCashflows();
     const data = getData();
+    const sameTypeOrders = existing
+      .filter(c => c.type === cashflow.type)
+      .map(c => c.displayOrder ?? 0);
+    const nextOrder = sameTypeOrders.length > 0 ? Math.max(...sameTypeOrders) + 1 : 0;
     const newCashflow: Cashflow = {
       ...cashflow,
       bucket: cashflow.type === 'expense' ? (cashflow.bucket ?? 'needs') : null,
+      displayOrder: typeof cashflow.displayOrder === 'number' ? cashflow.displayOrder : nextOrder,
       id: data.nextIds.cashflow++,
     };
     data.cashflows.push(newCashflow);
@@ -274,6 +310,16 @@ export const localDB = {
     Object.assign(cashflow, updates);
     saveData(data);
     return cashflow;
+  },
+
+  reorderCashflows(order: Array<{ id: number; displayOrder: number }>): Cashflow[] {
+    const data = getData();
+    order.forEach(item => {
+      const cf = data.cashflows.find(c => c.id === item.id);
+      if (cf) cf.displayOrder = item.displayOrder;
+    });
+    saveData(data);
+    return this.getCashflows();
   },
 
   deleteCashflow(id: number): void {
@@ -375,12 +421,15 @@ export const localDB = {
   getSettings(): Settings {
     const s = getData().settings;
     // Backfill budget percentages on legacy data so existing users keep the
-    // 50/30/20 defaults until they tweak them in Settings.
+    // 50/30/20 defaults until they tweak them in Settings. Sort mode defaults
+    // to 'custom' which preserves insertion order (the previous behaviour).
     return {
       currency: s.currency ?? 'GBP',
       budgetNeedsPct: s.budgetNeedsPct ?? DEFAULT_BUDGET_PCTS.budgetNeedsPct,
       budgetWantsPct: s.budgetWantsPct ?? DEFAULT_BUDGET_PCTS.budgetWantsPct,
       budgetSavingsPct: s.budgetSavingsPct ?? DEFAULT_BUDGET_PCTS.budgetSavingsPct,
+      incomeSortMode: s.incomeSortMode ?? 'custom',
+      expenseSortMode: s.expenseSortMode ?? 'custom',
     };
   },
 

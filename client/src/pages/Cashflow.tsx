@@ -1,13 +1,32 @@
-import { useSettings } from "@/hooks/use-finance";
+import { useSettings, useUpdateSettings } from "@/hooks/use-finance";
 import { AddCashflowDialog } from "@/components/AddCashflowDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
-import { Trash2, ArrowUpRight, ArrowDownRight, Save, X, Pencil, PiggyBank } from "lucide-react";
+import { Trash2, ArrowUpRight, ArrowDownRight, Save, X, Pencil, PiggyBank, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { localDB, Cashflow as CashflowType } from "@/lib/localStorage";
+import { localDB, Cashflow as CashflowType, CashflowSortMode } from "@/lib/localStorage";
 
 type Bucket = "needs" | "wants";
+type CashflowKind = "income" | "expense";
+
+const SORT_OPTIONS: Array<{ value: CashflowSortMode; label: string }> = [
+  { value: "custom", label: "Custom" },
+  { value: "name", label: "A→Z" },
+  { value: "amount", label: "Amount" },
+];
+
+function sortCashflows(items: CashflowType[], mode: CashflowSortMode): CashflowType[] {
+  const next = [...items];
+  if (mode === "amount") {
+    next.sort((a, b) => Number(b.amount) - Number(a.amount));
+  } else if (mode === "name") {
+    next.sort((a, b) => a.name.localeCompare(b.name));
+  } else {
+    next.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+  }
+  return next;
+}
 
 interface EditValues {
   name: string;
@@ -21,10 +40,104 @@ const BUDGET_DESCRIPTIONS: Record<"needs" | "wants" | "savings", { label: string
   savings: { label: "Savings", description: "What's left over after needs and wants" },
 };
 
+function SortPillsRow({
+  value,
+  onChange,
+  idPrefix,
+}: {
+  value: CashflowSortMode;
+  onChange: (m: CashflowSortMode) => void;
+  idPrefix: string;
+}) {
+  return (
+    <div
+      className="flex items-center justify-end gap-1 -mb-1"
+      role="radiogroup"
+      aria-label="Sort order"
+    >
+      <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground mr-1">Sort</span>
+      {SORT_OPTIONS.map(opt => {
+        const active = value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(opt.value)}
+            className={
+              "rounded-full px-2.5 py-1 text-[11px] tracking-wide transition-colors " +
+              (active
+                ? "bg-foreground text-background"
+                : "bg-muted/50 text-muted-foreground hover:text-foreground border border-border/40")
+            }
+            data-testid={`button-${idPrefix}-sort-${opt.value}`}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function ReorderHandle({
+  isFirst,
+  isLast,
+  onUp,
+  onDown,
+  idPrefix,
+  itemId,
+  itemName,
+}: {
+  isFirst: boolean;
+  isLast: boolean;
+  onUp: () => void;
+  onDown: () => void;
+  idPrefix: string;
+  itemId: number;
+  itemName: string;
+}) {
+  return (
+    <div className="flex items-center gap-1 flex-shrink-0 -ml-1" aria-label={`Reorder ${itemName}`}>
+      <GripVertical size={14} className="hidden sm:block text-muted-foreground/60" aria-hidden />
+      <div className="flex flex-col items-center -my-1">
+        <button
+          type="button"
+          onClick={onUp}
+          disabled={isFirst}
+          className="h-5 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/60 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+          aria-label={`Move ${itemName} up`}
+          data-testid={`button-${idPrefix}-move-up-${itemId}`}
+        >
+          <ChevronUp size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={onDown}
+          disabled={isLast}
+          className="h-5 w-6 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-background/60 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+          aria-label={`Move ${itemName} down`}
+          data-testid={`button-${idPrefix}-move-down-${itemId}`}
+        >
+          <ChevronDown size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Cashflow() {
   const [cashflows, setCashflows] = useState<CashflowType[]>([]);
   const { data: settings } = useSettings();
+  const updateSettings = useUpdateSettings();
   const currency = settings?.currency || "USD";
+
+  const incomeSortMode: CashflowSortMode = settings?.incomeSortMode ?? "custom";
+  const expenseSortMode: CashflowSortMode = settings?.expenseSortMode ?? "custom";
+
+  const [draggingId, setDraggingId] = useState<number | null>(null);
+  const [dragOverId, setDragOverId] = useState<number | null>(null);
 
   const needsPct = (settings?.budgetNeedsPct ?? 50) / 100;
   const wantsPct = (settings?.budgetWantsPct ?? 30) / 100;
@@ -57,11 +170,67 @@ export default function Cashflow() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editValues, setEditValues] = useState<EditValues>({ name: "", amount: "", bucket: "needs" });
 
-  const incomeItems = cashflows?.filter(c => c.type === 'income') || [];
-  const expenseItems = cashflows?.filter(c => c.type === 'expense') || [];
+  const incomeItems = useMemo(
+    () => sortCashflows(cashflows.filter(c => c.type === 'income'), incomeSortMode),
+    [cashflows, incomeSortMode]
+  );
+  const expenseItems = useMemo(
+    () => sortCashflows(cashflows.filter(c => c.type === 'expense'), expenseSortMode),
+    [cashflows, expenseSortMode]
+  );
 
   const totalIncome = incomeItems.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const totalExpense = expenseItems.reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+  const setSortMode = (kind: CashflowKind, mode: CashflowSortMode) => {
+    updateSettings.mutate(
+      kind === "income" ? { incomeSortMode: mode } : { expenseSortMode: mode }
+    );
+  };
+
+  // Reorder helper — rewrites displayOrder for all items of the given kind so
+  // the persisted positions are tightly packed (0..n-1).
+  const persistOrder = (kind: CashflowKind, orderedIds: number[]) => {
+    const order = orderedIds.map((id, displayOrder) => ({ id, displayOrder }));
+    localDB.reorderCashflows(order);
+    refreshCashflows();
+  };
+
+  const moveItem = (kind: CashflowKind, id: number, direction: "up" | "down") => {
+    const list = (kind === "income" ? incomeItems : expenseItems).map(c => c.id);
+    const idx = list.indexOf(id);
+    if (idx < 0) return;
+    const target = direction === "up" ? idx - 1 : idx + 1;
+    if (target < 0 || target >= list.length) return;
+    [list[idx], list[target]] = [list[target], list[idx]];
+    persistOrder(kind, list);
+  };
+
+  const handleDragStart = (id: number) => () => {
+    setDraggingId(id);
+  };
+  const handleDragEnd = () => {
+    setDraggingId(null);
+    setDragOverId(null);
+  };
+  const handleDragOver = (id: number) => (e: React.DragEvent) => {
+    if (draggingId === null || draggingId === id) return;
+    e.preventDefault();
+    if (dragOverId !== id) setDragOverId(id);
+  };
+  const handleDrop = (kind: CashflowKind, targetId: number) => (e: React.DragEvent) => {
+    e.preventDefault();
+    const sourceId = draggingId;
+    handleDragEnd();
+    if (sourceId === null || sourceId === targetId) return;
+    const list = (kind === "income" ? incomeItems : expenseItems).map(c => c.id);
+    const fromIdx = list.indexOf(sourceId);
+    const toIdx = list.indexOf(targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, sourceId);
+    persistOrder(kind, list);
+  };
 
   // Budget computations
   const budget = useMemo(() => {
@@ -152,15 +321,51 @@ export default function Cashflow() {
           </div>
 
           <div className="space-y-2">
-            {incomeItems.map((item) => (
+            <SortPillsRow
+              value={incomeSortMode}
+              onChange={(m) => setSortMode("income", m)}
+              idPrefix="income"
+            />
+            {incomeItems.map((item, idx) => {
+              const isCustom = incomeSortMode === "custom";
+              const isEditing = editingId === item.id;
+              const showHandle = isCustom && !isEditing;
+              const isDraggable = showHandle;
+              const isFirst = idx === 0;
+              const isLast = idx === incomeItems.length - 1;
+              const isDragOver = showHandle && dragOverId === item.id && draggingId !== null && draggingId !== item.id;
+              const isBeingDragged = draggingId === item.id;
+              return (
               <div
                 key={item.id}
+                draggable={isDraggable}
+                onDragStart={isDraggable ? handleDragStart(item.id) : undefined}
+                onDragOver={isDraggable ? handleDragOver(item.id) : undefined}
+                onDrop={isDraggable ? handleDrop("income", item.id) : undefined}
+                onDragEnd={isDraggable ? handleDragEnd : undefined}
                 className={
-                  "flex items-center gap-2 sm:gap-3 p-3 rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group " +
-                  (editingId === item.id ? "flex-wrap" : "")
+                  "flex items-center gap-2 sm:gap-3 p-3 rounded-2xl bg-muted/40 border transition-colors group " +
+                  (isEditing ? "flex-wrap " : "") +
+                  (isDraggable ? "cursor-grab active:cursor-grabbing " : "") +
+                  (isBeingDragged ? "opacity-50 " : "") +
+                  (isDragOver
+                    ? "border-[hsl(var(--chart-accent))] bg-[hsl(var(--chart-accent))]/10 "
+                    : "border-border/60 hover:bg-muted/60")
                 }
+                data-testid={`row-income-${item.id}`}
               >
-                {editingId === item.id ? (
+                {showHandle && (
+                  <ReorderHandle
+                    isFirst={isFirst}
+                    isLast={isLast}
+                    onUp={() => moveItem("income", item.id, "up")}
+                    onDown={() => moveItem("income", item.id, "down")}
+                    idPrefix="income"
+                    itemId={item.id}
+                    itemName={item.name}
+                  />
+                )}
+                {isEditing ? (
                   <>
                     <Input
                       value={editValues.name}
@@ -199,8 +404,8 @@ export default function Cashflow() {
                   </>
                 )}
               </div>
-            ))}
-
+              );
+            })}
             {incomeItems.length === 0 && (
               <div className="text-center py-8 text-muted-foreground text-sm italic">
                 No income sources added yet
@@ -230,17 +435,52 @@ export default function Cashflow() {
           </div>
 
           <div className="space-y-2">
-            {expenseItems.map((item) => {
+            <SortPillsRow
+              value={expenseSortMode}
+              onChange={(m) => setSortMode("expense", m)}
+              idPrefix="expense"
+            />
+            {expenseItems.map((item, idx) => {
               const itemBucket = (item.bucket ?? "needs") as Bucket;
+              const isCustom = expenseSortMode === "custom";
+              const isEditing = editingId === item.id;
+              const showHandle = isCustom && !isEditing;
+              const isDraggable = showHandle;
+              const isFirst = idx === 0;
+              const isLast = idx === expenseItems.length - 1;
+              const isDragOver = showHandle && dragOverId === item.id && draggingId !== null && draggingId !== item.id;
+              const isBeingDragged = draggingId === item.id;
               return (
                 <div
                   key={item.id}
+                  draggable={isDraggable}
+                  onDragStart={isDraggable ? handleDragStart(item.id) : undefined}
+                  onDragOver={isDraggable ? handleDragOver(item.id) : undefined}
+                  onDrop={isDraggable ? handleDrop("expense", item.id) : undefined}
+                  onDragEnd={isDraggable ? handleDragEnd : undefined}
                   className={
-                    "flex items-center gap-2 sm:gap-3 p-3 rounded-2xl bg-muted/40 border border-border/60 hover:bg-muted/60 transition-colors group " +
-                    (editingId === item.id ? "flex-wrap" : "")
+                    "flex items-center gap-2 sm:gap-3 p-3 rounded-2xl bg-muted/40 border transition-colors group " +
+                    (isEditing ? "flex-wrap " : "") +
+                    (isDraggable ? "cursor-grab active:cursor-grabbing " : "") +
+                    (isBeingDragged ? "opacity-50 " : "") +
+                    (isDragOver
+                      ? "border-[hsl(var(--chart-accent))] bg-[hsl(var(--chart-accent))]/10 "
+                      : "border-border/60 hover:bg-muted/60")
                   }
+                  data-testid={`row-expense-${item.id}`}
                 >
-                  {editingId === item.id ? (
+                  {showHandle && (
+                    <ReorderHandle
+                      isFirst={isFirst}
+                      isLast={isLast}
+                      onUp={() => moveItem("expense", item.id, "up")}
+                      onDown={() => moveItem("expense", item.id, "down")}
+                      idPrefix="expense"
+                      itemId={item.id}
+                      itemName={item.name}
+                    />
+                  )}
+                  {isEditing ? (
                     <>
                       <Input
                         value={editValues.name}
