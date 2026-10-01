@@ -7,6 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
 import { Trash2, Plus, Save, X, ChevronDown, ChevronUp, Loader2, ArrowUpDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
+import { SnapshotAmountInput } from "@/components/SnapshotAmountInput";
+import { evaluateSnapshotBalances } from "@/lib/snapshotAmounts";
 
 export function SnapshotManager() {
   const { data: snapshots } = useSnapshots();
@@ -24,6 +26,7 @@ export function SnapshotManager() {
   const [addingNew, setAddingNew] = useState(false);
   const [newMonth, setNewMonth] = useState(format(new Date(), "yyyy-MM-01"));
   const [newBalances, setNewBalances] = useState<Record<string, string>>({});
+  const evaluatedNewBalances = evaluateSnapshotBalances(newBalances);
 
   const sortedSnapshots = [...(snapshots || [])].sort((a, b) => 
     new Date(b.month).getTime() - new Date(a.month).getTime()
@@ -54,6 +57,7 @@ export function SnapshotManager() {
   };
 
   const handleAddNew = () => {
+    if (!evaluatedNewBalances) return;
     // Basic validation to prevent empty saves if that's happening
     if (Object.keys(newBalances).length === 0) {
       // If no balances provided, assume 0 for all categories to ensure consistency
@@ -71,7 +75,7 @@ export function SnapshotManager() {
       return;
     }
 
-    createSnapshot.mutate({ month: newMonth, balances: newBalances }, {
+    createSnapshot.mutate({ month: newMonth, balances: evaluatedNewBalances }, {
       onSuccess: () => {
         setAddingNew(false);
         setNewMonth(format(new Date(), "yyyy-MM-01"));
@@ -97,6 +101,7 @@ export function SnapshotManager() {
       {addingNew && (
         <div className="border border-primary/20 rounded-lg p-4 bg-primary/5 space-y-3">
           <Label className="text-sm font-semibold">New Snapshot</Label>
+          <p className="text-xs text-muted-foreground">Enter a balance or add amounts with + (e.g. 123+456).</p>
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">Date</Label>
             <Input
@@ -113,11 +118,11 @@ export function SnapshotManager() {
                   <span className="text-xs text-muted-foreground flex-1">{cat.name}</span>
                   <div className="relative">
                     <span className="absolute left-2 top-1 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
-                    <Input
-                      type="number"
+                    <SnapshotAmountInput
+                      label={cat.name}
                       value={newBalances[cat.id] || ""}
-                      onChange={(e) => setNewBalances(prev => ({ ...prev, [cat.id]: e.target.value }))}
-                      className="w-24 h-7 text-xs pl-5 bg-background/50"
+                      onChange={(value) => setNewBalances(prev => ({ ...prev, [cat.id]: value }))}
+                      className="w-32 h-7 text-xs pl-5 bg-background/50"
                       placeholder="0"
                     />
                   </div>
@@ -131,7 +136,7 @@ export function SnapshotManager() {
               size="sm"
               className="flex-1 h-8 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => handleAddNew()}
-              disabled={createSnapshot.isPending}
+              disabled={createSnapshot.isPending || evaluatedNewBalances === null}
             >
               {createSnapshot.isPending ? <Loader2 size={14} className="animate-spin" /> : "Save"}
             </Button>
