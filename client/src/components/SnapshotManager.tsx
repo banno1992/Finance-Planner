@@ -27,6 +27,7 @@ export function SnapshotManager() {
   const [newMonth, setNewMonth] = useState(format(new Date(), "yyyy-MM-01"));
   const [newBalances, setNewBalances] = useState<Record<string, string>>({});
   const evaluatedNewBalances = evaluateSnapshotBalances(newBalances);
+  const evaluatedEditBalances = evaluateSnapshotBalances(editValues);
 
   const sortedSnapshots = [...(snapshots || [])].sort((a, b) => 
     new Date(b.month).getTime() - new Date(a.month).getTime()
@@ -42,7 +43,8 @@ export function SnapshotManager() {
   };
 
   const handleSave = (id: number) => {
-    updateSnapshot.mutate({ id, balances: editValues }, {
+    if (!evaluatedEditBalances) return;
+    updateSnapshot.mutate({ id, balances: evaluatedEditBalances }, {
       onSuccess: () => {
         setEditingId(null);
         setEditValues({});
@@ -202,6 +204,7 @@ export function SnapshotManager() {
                     {editingId === snapshot.id ? (
                       <div className="space-y-4">
                         <Label className="text-base font-semibold">Edit Balances</Label>
+                        <p className="text-xs text-muted-foreground">Enter a balance or add amounts with + (e.g. 121+953).</p>
                         <ScrollArea className="h-[300px] pr-4">
                           <div className="space-y-3">
                             {categories?.map((cat) => {
@@ -211,10 +214,10 @@ export function SnapshotManager() {
                                   <span className="text-sm text-muted-foreground flex-1">{cat.name}</span>
                                   <div className="relative">
                                     <span className="absolute left-2 top-1.5 text-muted-foreground text-xs">{getCurrencySymbol(currency)}</span>
-                                    <Input
-                                      type="number"
+                                    <SnapshotAmountInput
+                                      label={cat.name}
                                       value={editValues[cat.id] || ""}
-                                      onChange={(e) => setEditValues(prev => ({ ...prev, [cat.id]: e.target.value }))}
+                                      onChange={(value) => setEditValues(prev => ({ ...prev, [cat.id]: value }))}
                                       className="w-32 h-8 text-sm pl-5 bg-background/50"
                                       placeholder="0.00"
                                     />
@@ -230,6 +233,8 @@ export function SnapshotManager() {
                             size="icon"
                             className="h-8 w-8 text-[hsl(var(--chart-positive))]"
                             onClick={() => handleSave(snapshot.id)}
+                            disabled={updateSnapshot.isPending || evaluatedEditBalances === null}
+                            aria-label="Save snapshot balances"
                           >
                             <Save size={14} />
                           </Button>
@@ -238,6 +243,7 @@ export function SnapshotManager() {
                             size="icon"
                             className="h-8 w-8 text-muted-foreground"
                             onClick={handleCancel}
+                            aria-label="Cancel editing snapshot"
                           >
                             <X size={14} />
                           </Button>
