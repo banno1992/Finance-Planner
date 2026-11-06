@@ -3,9 +3,11 @@ import { AddCashflowDialog } from "@/components/AddCashflowDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatCurrency, getCurrencySymbol } from "@/lib/currency";
-import { Trash2, ArrowUpRight, ArrowDownRight, Save, X, Pencil, PiggyBank, GripVertical, ChevronUp, ChevronDown } from "lucide-react";
+import { Trash2, ArrowUpRight, ArrowDownRight, Save, X, Pencil, PiggyBank, GripVertical, ChevronUp, ChevronDown, Copy } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { localDB, Cashflow as CashflowType, CashflowSortMode } from "@/lib/localStorage";
+import { expensesToSpreadsheet } from "@/lib/expenseExport";
+import { useToast } from "@/hooks/use-toast";
 
 type Bucket = "needs" | "wants";
 type CashflowKind = "income" | "expense";
@@ -153,6 +155,8 @@ function ReorderHandle({
 }
 
 export default function Cashflow() {
+  const { toast } = useToast();
+  const [copyingExpenses, setCopyingExpenses] = useState(false);
   const [cashflows, setCashflows] = useState<CashflowType[]>([]);
   const { data: settings } = useSettings();
   const updateSettings = useUpdateSettings();
@@ -207,6 +211,30 @@ export default function Cashflow() {
 
   const totalIncome = incomeItems.reduce((acc, curr) => acc + Number(curr.amount), 0);
   const totalExpense = expenseItems.reduce((acc, curr) => acc + Number(curr.amount), 0);
+
+  const handleCopyExpenses = async () => {
+    if (!expenseItems.length || copyingExpenses) return;
+    setCopyingExpenses(true);
+    try {
+      const text = expensesToSpreadsheet(expenseItems);
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("Clipboard access is unavailable in this browser.");
+      }
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Expenses copied",
+        description: "Paste into Google Sheets for Expense name, Amount, and Need/Want columns.",
+      });
+    } catch (error) {
+      toast({
+        title: "Couldn't copy expenses",
+        description: error instanceof Error ? error.message : "Allow clipboard access and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setCopyingExpenses(false);
+    }
+  };
 
   const setSortMode = (kind: CashflowKind, mode: CashflowSortMode) => {
     updateSettings.mutate(
@@ -450,7 +478,22 @@ export default function Cashflow() {
                 <ArrowDownRight size={20} />
               </div>
               <div>
-                <h3 className="font-serif text-lg font-light tracking-tight">Expenses</h3>
+                <div className="flex items-center gap-1">
+                  <h3 className="font-serif text-lg font-light tracking-tight">Expenses</h3>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground"
+                    aria-label="Copy expenses for Google Sheets"
+                    title="Copy expenses for Google Sheets"
+                    data-testid="button-copy-expenses"
+                    disabled={!expenseItems.length || copyingExpenses}
+                    onClick={handleCopyExpenses}
+                  >
+                    <Copy size={14} />
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">Recurring monthly outflows</p>
               </div>
             </div>
