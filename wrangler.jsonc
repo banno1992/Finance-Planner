@@ -1,0 +1,11 @@
+// Cloudflare Workers config: serves the built static app from dist/ (no server code).
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "finance-planner",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    // Send unknown paths (e.g. /settings) to index.html so app routes work on refresh.
+    "not_found_handling": "single-page-application"
+  }
+}
