@@ -43,24 +43,30 @@ Data storage preference: Browser LocalStorage (private, no database costs)
 
 ### Project Structure
 ```
-├── client/           # React frontend
+├── client/              # The whole app (Vite root)
+│   ├── index.html       # Entry HTML incl. PWA/iOS meta tags
+│   ├── public/          # icon.svg + generated PWA icons (npm run icons)
 │   └── src/
 │       ├── components/  # UI components
 │       ├── hooks/       # Custom hooks (use-finance.ts for data operations)
 │       ├── pages/       # Route pages
-│       └── lib/         # Utilities (localStorage.ts for data storage)
-└── server/           # Express server
-    ├── index.ts         # Boots Express, serves static frontend in prod or
-    │                    # mounts Vite dev middleware in dev. No /api routes.
-    ├── static.ts        # Production static file handler
-    └── vite.ts          # Dev-mode Vite middleware
+│       └── lib/         # localStorage.ts (data), deviceStorage.ts (persist/backup helpers)
+├── vite.config.ts       # Vite + vite-plugin-pwa (manifest, service worker)
+└── pwa-assets.config.ts # Icon generation from client/public/icon.svg
 ```
 
-There is no database. The previous Postgres/Drizzle scaffolding (server/db.ts,
-server/storage.ts, server/routes.ts, shared/schema.ts, shared/routes.ts,
-drizzle.config.ts) was removed in Task #11 because all data lives in the
-browser via `client/src/lib/localStorage.ts`. Do not reintroduce a database
-unless explicitly asked.
+This is a static, client-only PWA: no server, no database, no API. All data lives
+in the browser via `client/src/lib/localStorage.ts`. The user chose this for
+privacy and zero cost. Do not add a backend, database, analytics or any
+third-party network requests (fonts are self-hosted via @fontsource) unless
+explicitly asked.
+
+### Commands
+- `npm run dev` – dev server on http://localhost:5000
+- `npm test` – unit tests (node:test via tsx)
+- `npm run build` – type-check + production build to `dist/`
+- `npm run preview` – serve the built app (service worker active) on port 5000
+- `npm run icons` – regenerate PWA icons after editing `client/public/icon.svg`
 
 ### Data Flow Pattern
 All data operations go through `client/src/lib/localStorage.ts` which provides a simple API for CRUD operations. React Query hooks in `use-finance.ts` wrap these operations for cache management and reactivity.
@@ -90,9 +96,11 @@ All data operations go through `client/src/lib/localStorage.ts` which provides a
 - **Need / Want bucket on every expense** — drives the 50/30/20 budget. Legacy expenses without a bucket default to "Need" so older data keeps working.
 - **50/30/20 Budget section** — below the income/expense columns: shows Needs (50%), Wants (30%), Savings (20%) targets vs actuals as percentage-of-income, with a thin progress bar per row, an over/under flag in the negative chart color when a bucket is over (or savings are under) target, and a one-line verdict ("On track" / "Wants are over budget" / etc.). Savings is computed as `income − needs − wants`; negative savings shows as a deficit.
 
-### Data Backup
-- Export all data to JSON file
+### Data Backup & Safety
+- Export all data to JSON file (on installed phone apps this opens the share sheet, e.g. "Save to Files")
 - Import data from JSON file (useful for migrating between devices)
+- Settings shows the last backup date (stored under `networth_last_backup`) and warns after 30 days
+- On startup the app calls `navigator.storage.persist()` so the browser doesn't evict data
 
 ## External Dependencies
 
@@ -109,5 +117,5 @@ All data operations go through `client/src/lib/localStorage.ts` which provides a
 
 ### Development Tools
 - **Vite** - Fast development server and bundler
-- **esbuild** - Production build bundling for server
-- **tsx** - TypeScript execution for development
+- **vite-plugin-pwa** - Web app manifest + Workbox service worker (offline, installable)
+- **tsx** - Runs the TypeScript unit tests

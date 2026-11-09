@@ -75,19 +75,19 @@ export function MobileNav() {
       </div>
 
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-40 pb-safe">
-        <div className="flex justify-around items-center p-3 overflow-x-auto">
+        <div className="grid grid-cols-7 items-start px-1 py-2">
           {NAV_ITEMS.map((item) => {
             const isActive = location === item.href;
             return (
               <Link key={item.href} href={item.href}>
                 <div className={cn(
-                  "flex flex-col items-center gap-1 cursor-pointer px-1",
+                  "flex flex-col items-center gap-1 cursor-pointer min-w-0 py-1",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )}
                   data-testid={`link-mobile-nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
                   <item.icon size={20} />
-                  <span className="text-[10px] font-medium whitespace-nowrap">{item.label}</span>
+                  <span className="text-[10px] font-medium leading-tight text-center">{item.label}</span>
                 </div>
               </Link>
             );

@@ -1,4 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Source+Serif+4:opsz,wght@8..60,300..700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/space-grotesk";
+@import "@fontsource-variable/source-serif-4/opsz.css";
+@import "@fontsource-variable/jetbrains-mono";
 
 @tailwind base;
 @tailwind components;
@@ -6,10 +9,10 @@
 
 :root {
   /* Fonts */
-  --font-display: 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-serif: 'Source Serif 4', Georgia, serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-display: 'Space Grotesk Variable', sans-serif;
+  --font-body: 'Inter Variable', sans-serif;
+  --font-serif: 'Source Serif 4 Variable', Georgia, serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
 
   /* === LIGHT THEME (default) === */
   --background: 40 30% 97%;
@@ -131,6 +134,9 @@
 }
 
 @layer utilities {
+  /* Keep content clear of the iPhone home indicator in the installed app. */
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-foreground via-foreground to-muted-foreground;
   }

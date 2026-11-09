@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { localDB, type Category, type Cashflow, type StudentLoan, type Mortgage, type Pension, type Snapshot } from "@/lib/localStorage";
+import { recordBackup, saveFile } from "@/lib/deviceStorage";
 
 const QUERY_KEYS = {
   categories: ['categories'],
@@ -299,17 +300,13 @@ export function useDeletePension() {
 }
 
 export function useExportData() {
-  return () => {
+  /** Resolves true if the backup was saved/shared, false if the user cancelled. */
+  return async (): Promise<boolean> => {
     const data = localDB.exportData();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `finance_backup_${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    const saved = await saveFile(blob, `finance_backup_${new Date().toISOString().split('T')[0]}.json`);
+    if (saved) recordBackup();
+    return saved;
   };
 }
 

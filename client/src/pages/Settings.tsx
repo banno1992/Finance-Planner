@@ -8,6 +8,10 @@ import { Download, Upload, Plus, Trash2, GripVertical, Loader2, Pencil, Save, X 
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { BulkImportExpenses } from "@/components/BulkImportExpenses";
+import { daysSince, getLastBackup, isInstalledApp, isStoragePersistent } from "@/lib/deviceStorage";
+import { format } from "date-fns";
+
+const BACKUP_STALE_DAYS = 30;
 
 const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "AUD", "INR", "JPY"];
 
@@ -27,6 +31,22 @@ export default function Settings() {
   const [newCatName, setNewCatName] = useState("");
   const [budgetPcts, setBudgetPcts] = useState({ needs: "50", wants: "30", savings: "20" });
   const [budgetDirty, setBudgetDirty] = useState(false);
+  const [lastBackup, setLastBackup] = useState<Date | null>(() => getLastBackup());
+  const [persistent, setPersistent] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    isStoragePersistent().then(setPersistent);
+  }, []);
+
+  const handleExport = async () => {
+    if (await exportData()) {
+      setLastBackup(getLastBackup());
+      toast({ title: "Backup saved", description: "Keep the file somewhere private." });
+    }
+  };
+
+  const backupAge = lastBackup ? daysSince(lastBackup) : null;
+  const backupStale = backupAge === null || backupAge >= BACKUP_STALE_DAYS;
 
   useEffect(() => {
     if (settings && !budgetDirty) {
@@ -399,15 +419,34 @@ export default function Settings() {
         <div className="space-y-6">
           <div className="rounded-3xl border border-border bg-card/60 backdrop-blur-xl p-6 shadow-sm">
             <h3 className="font-serif text-xl font-light tracking-tight mb-4">Data Management</h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              Your data is stored locally. Export a backup or import data from a JSON file.
+            <p className="text-sm text-muted-foreground mb-4">
+              Your data is stored only on this device. Export a backup or import data from a JSON file.
             </p>
 
+            <div className="space-y-2 mb-6 text-sm" data-testid="backup-status">
+              <p className={backupStale ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}>
+                {lastBackup
+                  ? `Last backup: ${format(lastBackup, "d MMM yyyy")} (${backupAge === 0 ? "today" : `${backupAge} day${backupAge === 1 ? "" : "s"} ago`})`
+                  : "No backup made from this device yet."}
+                {backupStale && " Export a backup soon."}
+              </p>
+              {persistent === false && (
+                <p className="text-amber-600 dark:text-amber-400">
+                  {isInstalledApp()
+                    ? "Your browser may clear this data if storage runs low. Keep regular backups."
+                    : "Your browser may clear this data. Install the app to your Home Screen to protect it, and keep regular backups."}
+                </p>
+              )}
+              {persistent === true && (
+                <p className="text-muted-foreground">Storage is protected from automatic clearing.</p>
+              )}
+            </div>
+
             <div className="flex flex-col gap-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="justify-start h-12 gap-3 border-primary/20 hover:bg-primary/10 hover:text-primary"
-                onClick={() => exportData()}
+                onClick={handleExport}
               >
                 <Download size={18} />
                 Export Data (JSON)
@@ -426,7 +465,7 @@ export default function Settings() {
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                accept=".json"
+                accept="application/json,.json"
                 className="hidden"
               />
             </div>
